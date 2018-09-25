@@ -2,7 +2,7 @@
 
 An action-horror-adventure game. Collect artifacts and stay away from the ghosts.
 
-This is an entry to the [JS13kGames 2018 competition](https://2018.js13kgames.com/). That is, a competition to create a game using web technologies that fits in 13 kilobytes.
+This was originally [an entry](https://github.com/tkjantti/js13kgames-2018) to the [JS13kGames 2018 competition](https://2018.js13kgames.com/). That is, a competition to create a game using web technologies that fits in 13 kilobytes. Additional development is done on this repository.
 
 ## How to play
 
