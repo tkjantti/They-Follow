@@ -5,6 +5,7 @@
     "private": true,
     "scripts": {
         "build": "gulp build",
+        "deploy": "gulp deploy",
         "watch": "gulp"
     },
     "keywords": [
@@ -27,5 +28,8 @@
         "gulp-terser": "^1.1.5",
         "jshint": "^2.9.6",
         "run-sequence": "^2.2.1"
+    },
+    "dependencies": {
+        "gulp-gh-pages": "^0.5.4"
     }
 }

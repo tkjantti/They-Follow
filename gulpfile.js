@@ -13,6 +13,7 @@ const concat = require('gulp-concat');
 const imagemin = require('gulp-imagemin');
 const runSequence = require('run-sequence');
 const jshint = require('gulp-jshint');
+const ghPages = require('gulp-gh-pages');
 
 const paths = {
     src: {
@@ -79,6 +80,11 @@ gulp.task('build', callback => {
         ['cleanDist'],
         ['buildCSS', 'buildHTML', 'buildJS', 'optimizeImages'],
         callback);
+});
+
+gulp.task('deploy', ['build'], function () {
+    return gulp.src('./dist/**/*')
+        .pipe(ghPages());
 });
 
 gulp.task('browserSync', ['lintJS'], () => {
