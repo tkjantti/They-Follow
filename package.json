@@ -5,6 +5,7 @@
     "private": true,
     "scripts": {
         "build": "gulp build",
+        "deploy": "gulp deploy",
         "watch": "gulp"
     },
     "keywords": [
@@ -14,8 +15,7 @@
     "author": "Tero Jäntti <tkjantti@gmail.com>",
     "license": "MIT",
     "devDependencies": {
-        "browser-sync": "^2.24.6",
-        "fancy-log": "^1.3.2",
+        "browser-sync": "^2.26.3",
         "gulp": "^3.9.1",
         "gulp-clean-css": "^3.10.0",
         "gulp-concat": "^2.6.1",
@@ -25,10 +25,11 @@
         "gulp-minify-html": "^1.0.6",
         "gulp-rename": "^1.4.0",
         "gulp-rimraf": "^0.2.2",
-        "gulp-size": "^3.0.0",
-        "gulp-terser": "^1.0.1",
-        "gulp-zip": "^4.2.0",
+        "gulp-terser": "^1.1.5",
         "jshint": "^2.9.6",
         "run-sequence": "^2.2.1"
+    },
+    "dependencies": {
+        "gulp-gh-pages": "^0.5.4"
     }
 }

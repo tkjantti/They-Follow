@@ -13,9 +13,7 @@ const concat = require('gulp-concat');
 const imagemin = require('gulp-imagemin');
 const runSequence = require('run-sequence');
 const jshint = require('gulp-jshint');
-const zip = require('gulp-zip');
-const size = require('gulp-size');
-const log = require('fancy-log');
+const ghPages = require('gulp-gh-pages');
 
 const paths = {
     src: {
@@ -36,11 +34,6 @@ const paths = {
 
 gulp.task('cleanDist', () => {
     return gulp.src('dist/*', { read: false })
-        .pipe(deleteFiles());
-});
-
-gulp.task('cleanZip', () => {
-    return gulp.src('zip/*', { read: false })
         .pipe(deleteFiles());
 });
 
@@ -81,33 +74,17 @@ gulp.task('lintJS', () => {
         .pipe(jshint.reporter('default'));
 });
 
-gulp.task('zip', () => {
-    const limit = 13 * 1024;
-
-    let s = size({
-        showFiles: true,
-        // Pretty would show a kilobyte as 1000, not as 1024 what is needed.
-        pretty: false
-    });
-
-    return gulp.src(`${paths.dist.dir}/**`)
-        .pipe(zip('game.zip'))
-        .pipe(gulp.dest('zip'))
-        .pipe(s)
-        .on('end', () => {
-            if (limit < s.size) {
-                log(`WARNING: ZIP FILE TOO BIG: ${s.size} BYTES. LIMIT IS ${limit} BYTES.`);
-            }
-        });
-});
-
 gulp.task('build', callback => {
     runSequence(
         ['lintJS'],
-        ['cleanDist', 'cleanZip'],
+        ['cleanDist'],
         ['buildCSS', 'buildHTML', 'buildJS', 'optimizeImages'],
-        'zip',
         callback);
+});
+
+gulp.task('deploy', ['build'], function () {
+    return gulp.src('./dist/**/*')
+        .pipe(ghPages());
 });
 
 gulp.task('browserSync', ['lintJS'], () => {
