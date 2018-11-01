@@ -355,8 +355,8 @@
             // Moves by the given vector, keeping within level bounds.
             move(movement) {
                 let newPosition = new Vector(
-                    clamp(this.x + movement.x, 0, tileEngine.mapWidth - this.width),
-                    clamp(this.y + movement.y, 0, tileEngine.mapHeight - this.height));
+                    clamp(this.x + movement.x, 0, tileEngine.mapwidth - this.width),
+                    clamp(this.y + movement.y, 0, tileEngine.mapheight - this.height));
                 this.position = newPosition;
             },
 
@@ -464,8 +464,8 @@
 
                 let newBounds = {
                     // keep within the map
-                    x: clamp(this.x + xDiff, 0, tileEngine.mapWidth - this.width),
-                    y: clamp(this.y + yDiff, 0, tileEngine.mapHeight - this.height),
+                    x: clamp(this.x + xDiff, 0, tileEngine.mapwidth - this.width),
+                    y: clamp(this.y + yDiff, 0, tileEngine.mapheight - this.height),
 
                     width: this.width,
                     height: this.height,
@@ -476,7 +476,7 @@
                 } else if (xDiff && yDiff) {
                     // Check if can move horizontally.
                     newBounds = {
-                        x: clamp(this.x + xDiff, 0, tileEngine.mapWidth - this.width),
+                        x: clamp(this.x + xDiff, 0, tileEngine.mapwidth - this.width),
                         y: this.y,
                         width: this.width,
                         height: this.height,
@@ -487,7 +487,7 @@
                         // Check if can move vertically.
                         newBounds = {
                             x: this.x,
-                            y: clamp(this.y + yDiff, 0, tileEngine.mapHeight - this.height),
+                            y: clamp(this.y + yDiff, 0, tileEngine.mapheight - this.height),
                             width: this.width,
                             height: this.height,
                         };
@@ -552,38 +552,34 @@
 
         onlineToggleWaitTime = map.online;
 
-        tileEngine = kontra.tileEngine({
-            tileWidth: TILE_WIDTH,
-            tileHeight: TILE_HEIGHT,
-            width: map.data[0].length,
-            height: map.data.length,
-        });
-
-        tileEngine.addTilesets({
-            image: tileSheetImage
-        });
-
         const blockerData = mapToLayer(
             map, tile => (tile === '#' || tile === 'A') ? TILE_BLOCKER : 0);
 
-        tileEngine.addLayers([{
-            name: LAYER_GROUND,
-            data: mapToLayer(
-                map,
-                tile => (tile === ' ' || tile === 'G' || tile === '@' || tile === 'a') ? TILE_GROUND : 0),
-        }, {
-            name: LAYER_WALLS,
-            data: mapToLayer(map, tile => tile === '=' ? TILE_WALL : 0),
-            render: true,
-        }, {
-            name: LAYER_FLASHING,
-            data: blockerData,
-            render: false,
-        }, {
-            name: LAYER_BLOCKERS,
-            data: blockerData,
-            render: false,
-        }]);
+        tileEngine = kontra.tileEngine({
+            tilewidth: TILE_WIDTH,
+            tileheight: TILE_HEIGHT,
+            width: map.data[0].length,
+            height: map.data.length,
+            tilesets: [{
+                firstgid: 1,
+                image: tileSheetImage,
+            }],
+            layers: [{
+                name: LAYER_GROUND,
+                data: mapToLayer(
+                    map,
+                    tile => (tile === ' ' || tile === 'G' || tile === '@' || tile === 'a') ? TILE_GROUND : 0),
+            }, {
+                name: LAYER_WALLS,
+                data: mapToLayer(map, tile => tile === '=' ? TILE_WALL : 0),
+            }, {
+                name: LAYER_FLASHING,
+                data: blockerData,
+            }, {
+                name: LAYER_BLOCKERS,
+                data: blockerData,
+            }],
+        });
 
         let playerPosition = findPositionsOf(map, '@')[0];
         playerPosition.x += 5;
@@ -728,7 +724,9 @@
 
             render() {
                 let time = performance.now() - levelStartTime;
-                tileEngine.render();
+
+                tileEngine.renderLayer(LAYER_GROUND);
+                tileEngine.renderLayer(LAYER_WALLS);
                 if (onlineToggleSwitchTime && (Math.random() >= 0.5)) {
                     tileEngine.renderLayer(LAYER_FLASHING);
                 }
