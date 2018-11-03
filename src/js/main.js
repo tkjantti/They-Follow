@@ -156,39 +156,32 @@
         return mapIndex >= (maps.length - 1);
     }
 
-    class Vector {
-        constructor(x, y) {
-            this.x = x;
-            this.y = y;
-        }
+    kontra.vector.prototype.plus = function (v) {
+        return kontra.vector(this.x + v.x, this.y + v.y);
+    };
 
-        plus(v) {
-            return new Vector(this.x + v.x, this.y + v.y);
-        }
+    kontra.vector.prototype.minus = function (v) {
+        return kontra.vector(this.x - v.x, this.y - v.y);
+    };
 
-        minus(v) {
-            return new Vector(this.x - v.x, this.y - v.y);
-        }
+    kontra.vector.prototype.magnitude = function () {
+        return Math.sqrt(this.x * this.x + this.y * this.y);
+    };
 
-        magnitude() {
-            return Math.sqrt(this.x * this.x + this.y * this.y);
+    kontra.vector.prototype.normalized = function () {
+        let length = this.magnitude();
+        if (length === 0.0) {
+            return kontra.vector(0, 0);
         }
+        return kontra.vector(this.x / length, this.y / length);
+    };
 
-        normalized() {
-            let length = this.magnitude();
-            if (length === 0.0) {
-                return new Vector(0, 0);
-            }
-            return new Vector(this.x / length, this.y / length);
-        }
-
-        static getRandomDir() {
-            return new Vector(
-                (Math.floor(Math.random() * 3) - 1), // -1, 0 or 1
-                (Math.floor(Math.random() * 3) - 1)
-            ).normalized();
-        }
-    }
+    kontra.vector.getRandomDir = function () {
+        return kontra.vector(
+            (Math.floor(Math.random() * 3) - 1), // -1, 0 or 1
+            (Math.floor(Math.random() * 3) - 1)
+        ).normalized();
+    };
 
     function clamp(value, min, max) {
         return Math.min(Math.max(value, min), max);
@@ -207,7 +200,7 @@
         let toX = spriteTo.x + spriteTo.width / 2;
         let toY = spriteTo.y + spriteTo.height / 2;
 
-        return new Vector(toX - fromX, toY - fromY);
+        return kontra.vector(toX - fromX, toY - fromY);
     }
 
     function collidesWithLayer(sprite, layer) {
@@ -275,7 +268,7 @@
             color: 'red',
 
             // Adds some variance to how the ghosts approach the player.
-            relativeDir: Vector.getRandomDir(),
+            relativeDir: kontra.vector.getRandomDir(),
 
             get x() {
                 return this.position.x;
@@ -290,7 +283,7 @@
 
                 if (collidesWithBlockers(this)) {
                     this.color = 'yellow';
-                    let randomDirection = new Vector(
+                    let randomDirection = kontra.vector(
                         (-0.5 + Math.random()) * 20,
                         (-0.5 + Math.random()) * 20);
                     this.move(randomDirection);
@@ -310,7 +303,7 @@
                     let angle = ghostAngle + this.number * 0.3;
                     let r = 180 + Math.sin(ghostAngle * 10) * 30;
                     let target = player.position.plus(
-                        new Vector(Math.cos(angle) * r, Math.sin(angle) * r));
+                        kontra.vector(Math.cos(angle) * r, Math.sin(angle) * r));
                     movement = target.minus(this.position).normalized();
                 } else if (!player.dead) {
                     let target = this._getPlayerTarget();
@@ -330,7 +323,7 @@
                     if (!collidesWithBlockers(newBounds)) {
                         this.move(movement);
                     } else {
-                        let newTarget = new Vector(this.x, this.y);
+                        let newTarget = kontra.vector(this.x, this.y);
 
                         // Back off a little.
                         newTarget.x -= movement.x * 5;
@@ -354,7 +347,7 @@
 
             // Moves by the given vector, keeping within level bounds.
             move(movement) {
-                let newPosition = new Vector(
+                let newPosition = kontra.vector(
                     clamp(this.x + movement.x, 0, tileEngine.mapwidth - this.width),
                     clamp(this.y + movement.y, 0, tileEngine.mapheight - this.height));
                 this.position = newPosition;
@@ -370,7 +363,7 @@
                     return null;
                 }
 
-                let target = new Vector(
+                let target = kontra.vector(
                     player.x + player.width / 2,
                     player.y + player.height / 2);
 
@@ -472,7 +465,7 @@
                 };
 
                 if (!collidesWithLayer(newBounds, LAYER_WALLS)) {
-                    this.position = new Vector(newBounds.x, newBounds.y);
+                    this.position = kontra.vector(newBounds.x, newBounds.y);
                 } else if (xDiff && yDiff) {
                     // Check if can move horizontally.
                     newBounds = {
@@ -482,7 +475,7 @@
                         height: this.height,
                     };
                     if (!collidesWithLayer(newBounds, LAYER_WALLS)) {
-                        this.position = new Vector(newBounds.x, newBounds.y);
+                        this.position = kontra.vector(newBounds.x, newBounds.y);
                     } else {
                         // Check if can move vertically.
                         newBounds = {
@@ -492,7 +485,7 @@
                             height: this.height,
                         };
                         if (!collidesWithLayer(newBounds, LAYER_WALLS)) {
-                            this.position = new Vector(newBounds.x, newBounds.y);
+                            this.position = kontra.vector(newBounds.x, newBounds.y);
                         }
                     }
                 }
@@ -533,7 +526,7 @@
             let row = data[rowIndex];
             for (let colIndex = 0; colIndex < row.length; colIndex++) {
                 if (row[colIndex] === element) {
-                    result.push(new Vector(colIndex * TILE_WIDTH, rowIndex * TILE_HEIGHT));
+                    result.push(kontra.vector(colIndex * TILE_WIDTH, rowIndex * TILE_HEIGHT));
                 }
             }
         }
