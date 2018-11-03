@@ -218,20 +218,12 @@
     }
 
     function createArtifact(position, number) {
-        return {
+        return kontra.sprite({
             type: 'item',
             position: position,
             color: artifactColors[number % artifactColors.length],
             width: 20,
             height: 20,
-
-            get x() {
-                return this.position.x;
-            },
-
-            get y() {
-                return this.position.y;
-            },
 
             update() { },
 
@@ -255,11 +247,11 @@
 
                 cx.restore();
             }
-        };
+        });
     }
 
     function createGhost(position, number) {
-        return {
+        return kontra.sprite({
             type: 'ghost',
             position: position,
             number: number,
@@ -269,14 +261,6 @@
 
             // Adds some variance to how the ghosts approach the player.
             relativeDir: kontra.vector.getRandomDir(),
-
-            get x() {
-                return this.position.x;
-            },
-
-            get y() {
-                return this.position.y;
-            },
 
             update() {
                 let movement = null;
@@ -410,23 +394,15 @@
                 //     cx.fillRect(target.x - 2, target.y - 2, 4, 4);
                 // }
             }
-        };
+        });
     }
 
     function createPlayer(position) {
-        return {
+        return kontra.sprite({
             type: 'player',
             position: position,
             width: 20,
             height: 25,
-
-            get x() {
-                return this.position.x;
-            },
-
-            get y() {
-                return this.position.y;
-            },
 
             collidesWith(other) {
                 return this.x < other.x + other.width &&
@@ -515,7 +491,7 @@
 
                 cx.restore();
             }
-        };
+        });
     }
 
     function findPositionsOf(map, element) {
