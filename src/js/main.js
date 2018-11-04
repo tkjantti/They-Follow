@@ -76,8 +76,6 @@
 
     const MAX_LIVES = 5;
 
-    const tileSheetImagePath = 'images/tilesheet.png';
-
     const beginingText = "THEY FOLLOW";
 
     const readyText = "Press enter";
@@ -108,8 +106,6 @@
     let keysDown = {};
 
     let cx; // Convas context
-
-    let tileSheetImage;
 
     let lives = MAX_LIVES;
 
@@ -531,7 +527,7 @@
             height: map.data.length,
             tilesets: [{
                 firstgid: 1,
-                image: tileSheetImage,
+                image: kontra.assets.images.tilesheet,
             }],
             layers: [{
                 name: LAYER_GROUND,
@@ -794,13 +790,12 @@
         initMusicPlayer(eatTune, eatEffect, false);
         initMusicPlayer(endTune, endSong, false);
 
-        tileSheetImage = document.createElement('img');
-        tileSheetImage.src = tileSheetImagePath;
-
-        tileSheetImage.onload = () => {
-            drawInfoText(cx,readyText);            
-            bindKeys();
-        };
+        kontra.assets.imagePath = 'images';
+        kontra.assets.load('tilesheet.png')
+            .then(() => {
+                drawInfoText(cx,readyText);
+                bindKeys();
+            });
     }
 
     main();
