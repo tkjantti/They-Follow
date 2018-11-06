@@ -56,15 +56,6 @@
     const TILE_WALL = 3;
     const TILE_BLOCKER = 4;
 
-    const artifactColors = [
-        '#FFFF00',
-        '#FF00FF',
-        '#00FFFF',
-        '#FF0000',
-        '#00FF00',
-        '#0000FF',
-    ];
-
     const ONLINE_TOGGLE_DELAY = 1200;
 
     const LAYER_GROUND = 'G';
@@ -213,36 +204,11 @@
         return online && collidesWithLayer(sprite, LAYER_BLOCKERS);
     }
 
-    function createArtifact(position, number) {
+    function createArtifact(position) {
         return kontra.sprite({
             type: 'item',
             position: position,
-            color: artifactColors[number % artifactColors.length],
-            width: 20,
-            height: 20,
-
-            update() { },
-
-            render() {
-                let w = this.width, h = this.height;
-
-                cx.save();
-                cx.translate(this.x, this.y);
-
-                cx.fillStyle = 'black';
-                cx.strokeStyle = this.color;
-                cx.lineWidth = 3;
-
-                cx.beginPath();
-                cx.moveTo(0, h);
-                cx.lineTo(w / 2, 0);
-                cx.lineTo(w, h);
-                cx.closePath();
-                cx.fill();
-                cx.stroke();
-
-                cx.restore();
-            }
+            image: kontra.assets.images.artifact,
         });
     }
 
@@ -251,9 +217,7 @@
             type: 'ghost',
             position: position,
             number: number,
-            width: 22,
-            height: 22,
-            color: 'red',
+            image: kontra.assets.images.ghost,
 
             // Adds some variance to how the ghosts approach the player.
             relativeDir: kontra.vector.getRandomDir(),
@@ -357,39 +321,6 @@
 
                 return target;
             },
-
-            render() {
-                // Different size for drawing than for collision checking.
-                let w = this.width * 1.4, h = this.height * 1.4;
-                let x = this.x - (w - this.width) * 0.5;
-                let y = this.y - (h - this.height) * 0.70;
-
-                cx.save();
-                cx.translate(x, y);
-
-                cx.fillStyle = this.color;
-                cx.fillRect(0, h / 2, w, h / 2);
-
-                cx.beginPath();
-                cx.arc(w / 2, h / 2, w / 2, 0, 2 * Math.PI);
-                cx.fill();
-
-                cx.fillStyle = 'black';
-                cx.beginPath();
-                cx.arc(w * 0.3, h / 2, w * 0.15, 0, 2 * Math.PI);
-                cx.arc(w * 0.7, h / 2, w * 0.15, 0, 2 * Math.PI);
-                cx.fill();
-
-                cx.restore();
-
-                // Uncomment for debugging player attack positions:
-                //
-                // let target = this._getPlayerTarget();
-                // if (target) {
-                //     cx.fillStyle = 'orange';
-                //     cx.fillRect(target.x - 2, target.y - 2, 4, 4);
-                // }
-            }
         });
     }
 
@@ -397,8 +328,7 @@
         return kontra.sprite({
             type: 'player',
             position: position,
-            width: 20,
-            height: 25,
+            image: kontra.assets.images.player,
 
             collidesWith(other) {
                 return this.x < other.x + other.width &&
@@ -462,31 +392,6 @@
                     }
                 }
             },
-
-            render() {
-                cx.fillStyle = 'green';
-                let w = this.width * 1.2, h = this.height;
-                let x = this.x - (w - this.width);
-                let y = this.y - (h - this.height);
-                cx.fillRect(x, y, w, h);
-
-                cx.save();
-                cx.translate(x, y);
-
-                // Eyes
-                cx.fillStyle = 'white';
-                cx.beginPath();
-                cx.arc(w * 0.32, h / 2, w * 0.15, 0, 2 * Math.PI);
-                cx.arc(w * 0.68, h / 2, w * 0.15, 0, 2 * Math.PI);
-                cx.fill();
-                cx.fillStyle = 'black';
-                cx.beginPath();
-                cx.arc(w * 0.32, h / 2, w * 0.05, 0, 2 * Math.PI);
-                cx.arc(w * 0.68, h / 2, w * 0.05, 0, 2 * Math.PI);
-                cx.fill();
-
-                cx.restore();
-            }
         });
     }
 
@@ -554,10 +459,10 @@
         let artifactPositions = findPositionsOf(map, 'A').concat(findPositionsOf(map, 'a'));
         artifactCount = artifactPositions.length;
         numberOfArtifactsCollected = 0;
-        artifactPositions.forEach((pos, i) => {
+        artifactPositions.forEach(pos => {
             pos.x += 5;
             pos.y += 5;
-            let artifact = createArtifact(pos, i);
+            let artifact = createArtifact(pos);
             sprites.push(artifact);
         });
 
@@ -791,7 +696,7 @@
         initMusicPlayer(endTune, endSong, false);
 
         kontra.assets.imagePath = 'images';
-        kontra.assets.load('tilesheet.png')
+        kontra.assets.load('tilesheet.png', 'artifact.png', 'ghost.png', 'player.png')
             .then(() => {
                 drawInfoText(cx,readyText);
                 bindKeys();
