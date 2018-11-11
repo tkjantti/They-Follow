@@ -56,15 +56,6 @@
     const TILE_WALL = 3;
     const TILE_BLOCKER = 4;
 
-    const artifactColors = [
-        '#FFFF00',
-        '#FF00FF',
-        '#00FFFF',
-        '#FF0000',
-        '#00FF00',
-        '#0000FF',
-    ];
-
     const ONLINE_TOGGLE_DELAY = 1200;
 
     const LAYER_GROUND = 'G';
@@ -75,8 +66,6 @@
     const HELP_TEXT_DISPLAY_TIME = 3000;
 
     const MAX_LIVES = 5;
-
-    const tileSheetImagePath = 'images/tilesheet.png';
 
     const beginingText = "THEY FOLLOW";
 
@@ -108,8 +97,6 @@
     let keysDown = {};
 
     let cx; // Convas context
-
-    let tileSheetImage;
 
     let lives = MAX_LIVES;
 
@@ -156,39 +143,32 @@
         return mapIndex >= (maps.length - 1);
     }
 
-    class Vector {
-        constructor(x, y) {
-            this.x = x;
-            this.y = y;
-        }
+    kontra.vector.prototype.plus = function (v) {
+        return kontra.vector(this.x + v.x, this.y + v.y);
+    };
 
-        plus(v) {
-            return new Vector(this.x + v.x, this.y + v.y);
-        }
+    kontra.vector.prototype.minus = function (v) {
+        return kontra.vector(this.x - v.x, this.y - v.y);
+    };
 
-        minus(v) {
-            return new Vector(this.x - v.x, this.y - v.y);
-        }
+    kontra.vector.prototype.magnitude = function () {
+        return Math.sqrt(this.x * this.x + this.y * this.y);
+    };
 
-        magnitude() {
-            return Math.sqrt(this.x * this.x + this.y * this.y);
+    kontra.vector.prototype.normalized = function () {
+        let length = this.magnitude();
+        if (length === 0.0) {
+            return kontra.vector(0, 0);
         }
+        return kontra.vector(this.x / length, this.y / length);
+    };
 
-        normalized() {
-            let length = this.magnitude();
-            if (length === 0.0) {
-                return new Vector(0, 0);
-            }
-            return new Vector(this.x / length, this.y / length);
-        }
-
-        static getRandomDir() {
-            return new Vector(
-                (Math.floor(Math.random() * 3) - 1), // -1, 0 or 1
-                (Math.floor(Math.random() * 3) - 1)
-            ).normalized();
-        }
-    }
+    kontra.vector.getRandomDir = function () {
+        return kontra.vector(
+            (Math.floor(Math.random() * 3) - 1), // -1, 0 or 1
+            (Math.floor(Math.random() * 3) - 1)
+        ).normalized();
+    };
 
     function clamp(value, min, max) {
         return Math.min(Math.max(value, min), max);
@@ -207,7 +187,7 @@
         let toX = spriteTo.x + spriteTo.width / 2;
         let toY = spriteTo.y + spriteTo.height / 2;
 
-        return new Vector(toX - fromX, toY - fromY);
+        return kontra.vector(toX - fromX, toY - fromY);
     }
 
     function collidesWithLayer(sprite, layer) {
@@ -224,73 +204,30 @@
         return online && collidesWithLayer(sprite, LAYER_BLOCKERS);
     }
 
-    function createArtifact(position, number) {
-        return {
+    function createArtifact(position) {
+        return kontra.sprite({
             type: 'item',
             position: position,
-            color: artifactColors[number % artifactColors.length],
-            width: 20,
-            height: 20,
-
-            get x() {
-                return this.position.x;
-            },
-
-            get y() {
-                return this.position.y;
-            },
-
-            update() { },
-
-            render() {
-                let w = this.width, h = this.height;
-
-                cx.save();
-                cx.translate(this.x, this.y);
-
-                cx.fillStyle = 'black';
-                cx.strokeStyle = this.color;
-                cx.lineWidth = 3;
-
-                cx.beginPath();
-                cx.moveTo(0, h);
-                cx.lineTo(w / 2, 0);
-                cx.lineTo(w, h);
-                cx.closePath();
-                cx.fill();
-                cx.stroke();
-
-                cx.restore();
-            }
-        };
+            image: kontra.assets.images.artifact,
+        });
     }
 
     function createGhost(position, number) {
-        return {
+        return kontra.sprite({
             type: 'ghost',
             position: position,
             number: number,
-            width: 22,
-            height: 22,
-            color: 'red',
+            image: kontra.assets.images.ghost,
 
             // Adds some variance to how the ghosts approach the player.
-            relativeDir: Vector.getRandomDir(),
-
-            get x() {
-                return this.position.x;
-            },
-
-            get y() {
-                return this.position.y;
-            },
+            relativeDir: kontra.vector.getRandomDir(),
 
             update() {
                 let movement = null;
 
                 if (collidesWithBlockers(this)) {
                     this.color = 'yellow';
-                    let randomDirection = new Vector(
+                    let randomDirection = kontra.vector(
                         (-0.5 + Math.random()) * 20,
                         (-0.5 + Math.random()) * 20);
                     this.move(randomDirection);
@@ -310,7 +247,7 @@
                     let angle = ghostAngle + this.number * 0.3;
                     let r = 180 + Math.sin(ghostAngle * 10) * 30;
                     let target = player.position.plus(
-                        new Vector(Math.cos(angle) * r, Math.sin(angle) * r));
+                        kontra.vector(Math.cos(angle) * r, Math.sin(angle) * r));
                     movement = target.minus(this.position).normalized();
                 } else if (!player.dead) {
                     let target = this._getPlayerTarget();
@@ -330,7 +267,7 @@
                     if (!collidesWithBlockers(newBounds)) {
                         this.move(movement);
                     } else {
-                        let newTarget = new Vector(this.x, this.y);
+                        let newTarget = kontra.vector(this.x, this.y);
 
                         // Back off a little.
                         newTarget.x -= movement.x * 5;
@@ -354,9 +291,9 @@
 
             // Moves by the given vector, keeping within level bounds.
             move(movement) {
-                let newPosition = new Vector(
-                    clamp(this.x + movement.x, 0, tileEngine.mapWidth - this.width),
-                    clamp(this.y + movement.y, 0, tileEngine.mapHeight - this.height));
+                let newPosition = kontra.vector(
+                    clamp(this.x + movement.x, 0, tileEngine.mapwidth - this.width),
+                    clamp(this.y + movement.y, 0, tileEngine.mapheight - this.height));
                 this.position = newPosition;
             },
 
@@ -370,7 +307,7 @@
                     return null;
                 }
 
-                let target = new Vector(
+                let target = kontra.vector(
                     player.x + player.width / 2,
                     player.y + player.height / 2);
 
@@ -384,56 +321,14 @@
 
                 return target;
             },
-
-            render() {
-                // Different size for drawing than for collision checking.
-                let w = this.width * 1.4, h = this.height * 1.4;
-                let x = this.x - (w - this.width) * 0.5;
-                let y = this.y - (h - this.height) * 0.70;
-
-                cx.save();
-                cx.translate(x, y);
-
-                cx.fillStyle = this.color;
-                cx.fillRect(0, h / 2, w, h / 2);
-
-                cx.beginPath();
-                cx.arc(w / 2, h / 2, w / 2, 0, 2 * Math.PI);
-                cx.fill();
-
-                cx.fillStyle = 'black';
-                cx.beginPath();
-                cx.arc(w * 0.3, h / 2, w * 0.15, 0, 2 * Math.PI);
-                cx.arc(w * 0.7, h / 2, w * 0.15, 0, 2 * Math.PI);
-                cx.fill();
-
-                cx.restore();
-
-                // Uncomment for debugging player attack positions:
-                //
-                // let target = this._getPlayerTarget();
-                // if (target) {
-                //     cx.fillStyle = 'orange';
-                //     cx.fillRect(target.x - 2, target.y - 2, 4, 4);
-                // }
-            }
-        };
+        });
     }
 
     function createPlayer(position) {
-        return {
+        return kontra.sprite({
             type: 'player',
             position: position,
-            width: 20,
-            height: 25,
-
-            get x() {
-                return this.position.x;
-            },
-
-            get y() {
-                return this.position.y;
-            },
+            image: kontra.assets.images.player,
 
             collidesWith(other) {
                 return this.x < other.x + other.width &&
@@ -464,65 +359,40 @@
 
                 let newBounds = {
                     // keep within the map
-                    x: clamp(this.x + xDiff, 0, tileEngine.mapWidth - this.width),
-                    y: clamp(this.y + yDiff, 0, tileEngine.mapHeight - this.height),
+                    x: clamp(this.x + xDiff, 0, tileEngine.mapwidth - this.width),
+                    y: clamp(this.y + yDiff, 0, tileEngine.mapheight - this.height),
 
                     width: this.width,
                     height: this.height,
                 };
 
                 if (!collidesWithLayer(newBounds, LAYER_WALLS)) {
-                    this.position = new Vector(newBounds.x, newBounds.y);
+                    this.position = kontra.vector(newBounds.x, newBounds.y);
                 } else if (xDiff && yDiff) {
                     // Check if can move horizontally.
                     newBounds = {
-                        x: clamp(this.x + xDiff, 0, tileEngine.mapWidth - this.width),
+                        x: clamp(this.x + xDiff, 0, tileEngine.mapwidth - this.width),
                         y: this.y,
                         width: this.width,
                         height: this.height,
                     };
                     if (!collidesWithLayer(newBounds, LAYER_WALLS)) {
-                        this.position = new Vector(newBounds.x, newBounds.y);
+                        this.position = kontra.vector(newBounds.x, newBounds.y);
                     } else {
                         // Check if can move vertically.
                         newBounds = {
                             x: this.x,
-                            y: clamp(this.y + yDiff, 0, tileEngine.mapHeight - this.height),
+                            y: clamp(this.y + yDiff, 0, tileEngine.mapheight - this.height),
                             width: this.width,
                             height: this.height,
                         };
                         if (!collidesWithLayer(newBounds, LAYER_WALLS)) {
-                            this.position = new Vector(newBounds.x, newBounds.y);
+                            this.position = kontra.vector(newBounds.x, newBounds.y);
                         }
                     }
                 }
             },
-
-            render() {
-                cx.fillStyle = 'green';
-                let w = this.width * 1.2, h = this.height;
-                let x = this.x - (w - this.width);
-                let y = this.y - (h - this.height);
-                cx.fillRect(x, y, w, h);
-
-                cx.save();
-                cx.translate(x, y);
-
-                // Eyes
-                cx.fillStyle = 'white';
-                cx.beginPath();
-                cx.arc(w * 0.32, h / 2, w * 0.15, 0, 2 * Math.PI);
-                cx.arc(w * 0.68, h / 2, w * 0.15, 0, 2 * Math.PI);
-                cx.fill();
-                cx.fillStyle = 'black';
-                cx.beginPath();
-                cx.arc(w * 0.32, h / 2, w * 0.05, 0, 2 * Math.PI);
-                cx.arc(w * 0.68, h / 2, w * 0.05, 0, 2 * Math.PI);
-                cx.fill();
-
-                cx.restore();
-            }
-        };
+        });
     }
 
     function findPositionsOf(map, element) {
@@ -533,7 +403,7 @@
             let row = data[rowIndex];
             for (let colIndex = 0; colIndex < row.length; colIndex++) {
                 if (row[colIndex] === element) {
-                    result.push(new Vector(colIndex * TILE_WIDTH, rowIndex * TILE_HEIGHT));
+                    result.push(kontra.vector(colIndex * TILE_WIDTH, rowIndex * TILE_HEIGHT));
                 }
             }
         }
@@ -552,38 +422,34 @@
 
         onlineToggleWaitTime = map.online;
 
-        tileEngine = kontra.tileEngine({
-            tileWidth: TILE_WIDTH,
-            tileHeight: TILE_HEIGHT,
-            width: map.data[0].length,
-            height: map.data.length,
-        });
-
-        tileEngine.addTilesets({
-            image: tileSheetImage
-        });
-
         const blockerData = mapToLayer(
             map, tile => (tile === '#' || tile === 'A') ? TILE_BLOCKER : 0);
 
-        tileEngine.addLayers([{
-            name: LAYER_GROUND,
-            data: mapToLayer(
-                map,
-                tile => (tile === ' ' || tile === 'G' || tile === '@' || tile === 'a') ? TILE_GROUND : 0),
-        }, {
-            name: LAYER_WALLS,
-            data: mapToLayer(map, tile => tile === '=' ? TILE_WALL : 0),
-            render: true,
-        }, {
-            name: LAYER_FLASHING,
-            data: blockerData,
-            render: false,
-        }, {
-            name: LAYER_BLOCKERS,
-            data: blockerData,
-            render: false,
-        }]);
+        tileEngine = kontra.tileEngine({
+            tilewidth: TILE_WIDTH,
+            tileheight: TILE_HEIGHT,
+            width: map.data[0].length,
+            height: map.data.length,
+            tilesets: [{
+                firstgid: 1,
+                image: kontra.assets.images.tilesheet,
+            }],
+            layers: [{
+                name: LAYER_GROUND,
+                data: mapToLayer(
+                    map,
+                    tile => (tile === ' ' || tile === 'G' || tile === '@' || tile === 'a') ? TILE_GROUND : 0),
+            }, {
+                name: LAYER_WALLS,
+                data: mapToLayer(map, tile => tile === '=' ? TILE_WALL : 0),
+            }, {
+                name: LAYER_FLASHING,
+                data: blockerData,
+            }, {
+                name: LAYER_BLOCKERS,
+                data: blockerData,
+            }],
+        });
 
         let playerPosition = findPositionsOf(map, '@')[0];
         playerPosition.x += 5;
@@ -593,10 +459,10 @@
         let artifactPositions = findPositionsOf(map, 'A').concat(findPositionsOf(map, 'a'));
         artifactCount = artifactPositions.length;
         numberOfArtifactsCollected = 0;
-        artifactPositions.forEach((pos, i) => {
+        artifactPositions.forEach(pos => {
             pos.x += 5;
             pos.y += 5;
-            let artifact = createArtifact(pos, i);
+            let artifact = createArtifact(pos);
             sprites.push(artifact);
         });
 
@@ -728,7 +594,9 @@
 
             render() {
                 let time = performance.now() - levelStartTime;
-                tileEngine.render();
+
+                tileEngine.renderLayer(LAYER_GROUND);
+                tileEngine.renderLayer(LAYER_WALLS);
                 if (onlineToggleSwitchTime && (Math.random() >= 0.5)) {
                     tileEngine.renderLayer(LAYER_FLASHING);
                 }
@@ -827,13 +695,12 @@
         initMusicPlayer(eatTune, eatEffect, false);
         initMusicPlayer(endTune, endSong, false);
 
-        tileSheetImage = document.createElement('img');
-        tileSheetImage.src = tileSheetImagePath;
-
-        tileSheetImage.onload = () => {
-            drawInfoText(cx,readyText);            
-            bindKeys();
-        };
+        kontra.assets.imagePath = 'images';
+        kontra.assets.load('tilesheet.png', 'artifact.png', 'ghost.png', 'player.png')
+            .then(() => {
+                drawInfoText(cx,readyText);
+                bindKeys();
+            });
     }
 
     main();
