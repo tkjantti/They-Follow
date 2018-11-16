@@ -27,6 +27,7 @@
 /* global SONGS */
 
 (function () {
+    const clamp = VECTOR.clamp;
 
     //----------------------------------------------------------------------------
     // Music data section
@@ -136,10 +137,6 @@
 
     function gameIsFinished() {
         return mapIndex >= (maps.length - 1);
-    }
-
-    function clamp(value, min, max) {
-        return Math.min(Math.max(value, min), max);
     }
 
     function getMovementBetween(spriteFrom, spriteTo) {

@@ -62,4 +62,8 @@ const VECTOR = {};
     exports.getDistance = function (a, b) {
         return a.minus(b).magnitude();
     };
+
+    exports.clamp = function (value, min, max) {
+        return Math.min(Math.max(value, min), max);
+    };
 })(VECTOR);
