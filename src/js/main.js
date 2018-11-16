@@ -23,6 +23,7 @@
 */
 
 /* global CPlayer, maps */
+/* global VECTOR */
 /* global SONGS */
 
 (function () {
@@ -137,42 +138,8 @@
         return mapIndex >= (maps.length - 1);
     }
 
-    kontra.vector.prototype.plus = function (v) {
-        return kontra.vector(this.x + v.x, this.y + v.y);
-    };
-
-    kontra.vector.prototype.minus = function (v) {
-        return kontra.vector(this.x - v.x, this.y - v.y);
-    };
-
-    kontra.vector.prototype.magnitude = function () {
-        return Math.sqrt(this.x * this.x + this.y * this.y);
-    };
-
-    kontra.vector.prototype.normalized = function () {
-        let length = this.magnitude();
-        if (length === 0.0) {
-            return kontra.vector(0, 0);
-        }
-        return kontra.vector(this.x / length, this.y / length);
-    };
-
-    kontra.vector.getRandomDir = function () {
-        return kontra.vector(
-            (Math.floor(Math.random() * 3) - 1), // -1, 0 or 1
-            (Math.floor(Math.random() * 3) - 1)
-        ).normalized();
-    };
-
     function clamp(value, min, max) {
         return Math.min(Math.max(value, min), max);
-    }
-
-    /*
-     * Gets distance between two positions.
-     */
-    function getDistance(a, b) {
-        return a.minus(b).magnitude();
     }
 
     function getMovementBetween(spriteFrom, spriteTo) {
@@ -296,7 +263,7 @@
              * if the player is too far.
              */
             _getPlayerTarget() {
-                let distanceToPlayer = getDistance(this.position, player.position);
+                let distanceToPlayer = VECTOR.getDistance(this.position, player.position);
                 if (distanceToPlayer > 400) {
                     return null;
                 }
