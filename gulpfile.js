@@ -14,8 +14,6 @@ const runSequence = require('run-sequence');
 const jshint = require('gulp-jshint');
 const ghPages = require('gulp-gh-pages');
 
-const jsNoLibraries = ['src/js/maps.js', 'src/js/main.js'];
-
 gulp.task('cleanDist', () => {
     return gulp.src('dist/*', { read: false })
         .pipe(deleteFiles());
@@ -37,7 +35,7 @@ gulp.task('optimizeImages', () => {
 });
 
 gulp.task('lintJS', () => {
-    return gulp.src(jsNoLibraries)
+    return gulp.src(['src/js/*.js', '!./src/js/kontra.js', '!./src/js/player-small.js'])
         .pipe(jshint())
         .pipe(jshint.reporter('default'));
 });
