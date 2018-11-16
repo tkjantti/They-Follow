@@ -39,12 +39,6 @@
     const playerSpeed = 1.5;
     const diagonalSpeedCoefficient = 0.707;
 
-    const KEY_ENTER = 13;
-    const KEY_LEFT = 37;
-    const KEY_UP = 38;
-    const KEY_RIGHT = 39;
-    const KEY_DOWN = 40;
-
     const TILE_WIDTH = 32;
     const TILE_HEIGHT = 32;
 
@@ -89,8 +83,6 @@
         "THANKS FOR PLAYING!",
         ""
     ];
-
-    let keysDown = {};
 
     let cx; // Convas context
 
@@ -298,15 +290,15 @@
             update() {
                 let xDiff = 0, yDiff = 0;
 
-                if (keysDown[KEY_LEFT]) {
+                if (kontra.keys.pressed('left')) {
                     xDiff = -playerSpeed;
-                } else if (keysDown[KEY_RIGHT]) {
+                } else if (kontra.keys.pressed('right')) {
                     xDiff = playerSpeed;
                 }
 
-                if (keysDown[KEY_UP]) {
+                if (kontra.keys.pressed('up')) {
                     yDiff = -playerSpeed;
-                } else if (keysDown[KEY_DOWN]) {
+                } else if (kontra.keys.pressed('down')) {
                     yDiff = playerSpeed;
                 }
 
@@ -444,9 +436,7 @@
     }
 
     function bindKeys() {
-        document.addEventListener("keydown", e => {
-            keysDown[e.which] = true;
-
+        kontra.keys.bind('enter', () => {
             // Start the level when enter is pressed.
             if (!gameStarted) {
                 createMap(maps[mapIndex]);
@@ -457,7 +447,7 @@
             }
 
             // Restart the level when enter is pressed.
-            if (e.which === KEY_ENTER && player.dead) {
+            if (player.dead) {
 
                 // If no more lives, restart the whole game.
                 if (lives <= 0) {
@@ -468,10 +458,6 @@
                 createMap(maps[mapIndex]);
                 playTune("main");
             }
-        });
-
-        document.addEventListener("keyup", e => {
-            keysDown[e.which] = false;
         });
     }
 
