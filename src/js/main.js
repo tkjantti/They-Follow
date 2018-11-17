@@ -26,6 +26,7 @@
 /* global VECTOR */
 /* global SONGS */
 /* global Map */
+/* global LOADER */
 
 (function () {
     const clamp = VECTOR.clamp;
@@ -39,13 +40,6 @@
 
     const playerSpeed = 1.5;
     const diagonalSpeedCoefficient = 0.707;
-
-    const TILE_WIDTH = 32;
-    const TILE_HEIGHT = 32;
-
-    const TILE_GROUND = 1;
-    const TILE_WALL = 3;
-    const TILE_BLOCKER = 4;
 
     const HELP_TEXT_DISPLAY_TIME = 3000;
 
@@ -83,19 +77,15 @@
     let lives = MAX_LIVES;
 
     let mapIndex = 0;
-    let currentMap;
     let map = new Map();
 
-    let player;
-
-    let artifactCount;
     let numberOfArtifactsCollected = 0;
 
     // Angle for the ghosts in the winning animation.
     let ghostAngle = 0;
 
     function mapIsFinished() {
-        return numberOfArtifactsCollected === artifactCount;
+        return numberOfArtifactsCollected === map.artifactCount;
     }
 
     function gameIsFinished() {
@@ -153,10 +143,10 @@
                 } else if (gameIsFinished() && 1500 < (performance.now() - map.startTime)) {
                     let angle = ghostAngle + this.number * 0.3;
                     let r = 180 + Math.sin(ghostAngle * 10) * 30;
-                    let target = player.position.plus(
+                    let target = map.player.position.plus(
                         kontra.vector(Math.cos(angle) * r, Math.sin(angle) * r));
                     movement = target.minus(this.position).normalized();
-                } else if (!player.dead) {
+                } else if (!map.player.dead) {
                     let target = this._getPlayerTarget();
                     if (target) {
                         movement = target.minus(this.position).normalized();
@@ -180,7 +170,7 @@
                         newTarget.x -= movement.x * 5;
                         newTarget.y -= movement.y * 5;
 
-                        let toPlayer = getMovementBetween(this, player);
+                        let toPlayer = getMovementBetween(this, map.player);
                         let dodgeHorizontally = Math.abs(toPlayer.x) < Math.abs(toPlayer.y);
                         let dodgeAmount = 50;
 
@@ -209,14 +199,14 @@
              * if the player is too far.
              */
             _getPlayerTarget() {
-                let distanceToPlayer = VECTOR.getDistance(this.position, player.position);
+                let distanceToPlayer = VECTOR.getDistance(this.position, map.player.position);
                 if (distanceToPlayer > 400) {
                     return null;
                 }
 
                 let target = kontra.vector(
-                    player.x + player.width / 2,
-                    player.y + player.height / 2);
+                    map.player.x + map.player.width / 2,
+                    map.player.y + map.player.height / 2);
 
                 // When offline, approach the player from different
                 // directions so that the ghosts don't slump together
@@ -302,79 +292,16 @@
         });
     }
 
-    function findPositionsOf(map, element) {
-        let result = [];
-        let data = map.data;
-
-        for (let rowIndex = 0; rowIndex < data.length; rowIndex++) {
-            let row = data[rowIndex];
-            for (let colIndex = 0; colIndex < row.length; colIndex++) {
-                if (row[colIndex] === element) {
-                    result.push(kontra.vector(colIndex * TILE_WIDTH, rowIndex * TILE_HEIGHT));
-                }
-            }
-        }
-
-        return result;
-    }
-
-    function mapToLayer(map, convert) {
-        return map.data.reduce((total, current) => total + current).split('').map(convert);
-    }
-
     function createMap(mapData) {
-        currentMap = mapData;
-
-        const blockerData = mapToLayer(
-            mapData, tile => (tile === '#' || tile === 'A') ? TILE_BLOCKER : 0);
-
-        let tileEngine = kontra.tileEngine({
-            tilewidth: TILE_WIDTH,
-            tileheight: TILE_HEIGHT,
-            width: mapData.data[0].length,
-            height: mapData.data.length,
-            tilesets: [{
-                firstgid: 1,
-                image: kontra.assets.images.tilesheet,
-            }],
-            layers: [{
-                name: Map.LAYER_GROUND,
-                data: mapToLayer(
-                    mapData,
-                    tile => (tile === ' ' || tile === 'G' || tile === '@' || tile === 'a') ? TILE_GROUND : 0),
-            }, {
-                name: Map.LAYER_WALLS,
-                data: mapToLayer(mapData, tile => tile === '=' ? TILE_WALL : 0),
-            }, {
-                name: Map.LAYER_FLASHING,
-                data: blockerData,
-            }, {
-                name: Map.LAYER_BLOCKERS,
-                data: blockerData,
-            }],
-        });
-
-        map.reset(mapData, tileEngine);
-
-        let playerPosition = findPositionsOf(mapData, '@')[0];
-        playerPosition.x += 5;
-        player = createPlayer(playerPosition);
-        map.add(player);
-
-        let artifactPositions = findPositionsOf(mapData, 'A').concat(findPositionsOf(mapData, 'a'));
-        artifactCount = artifactPositions.length;
         numberOfArtifactsCollected = 0;
-        artifactPositions.forEach(pos => {
-            pos.x += 5;
-            pos.y += 5;
-            let artifact = createArtifact(pos);
-            map.add(artifact);
-        });
 
-        findPositionsOf(mapData, 'G').forEach((pos, i) => {
-            let ghost = createGhost(pos, i);
-            map.add(ghost);
-        });
+        let createFunctions = {
+            '@': createPlayer,
+            'A': createArtifact,
+            'a': createArtifact,
+            'G': createGhost,
+        };
+        LOADER.loadMap(mapData, map, createFunctions);
     }
 
     function drawStatusText(cx, text) {
@@ -402,7 +329,7 @@
             }
 
             // Restart the level when enter is pressed.
-            if (player.dead) {
+            if (map.player.dead) {
 
                 // If no more lives, restart the whole game.
                 if (lives <= 0) {
@@ -422,16 +349,16 @@
 
             if ((sprite.type === 'ghost') &&
                 (sprite.color !== 'yellow') &&
-                player.collidesWith(sprite) &&
-                !player.dead &&
+                map.player.collidesWith(sprite) &&
+                !map.player.dead &&
                 !mapIsFinished()) {
-                player.dead = true;
+                map.player.dead = true;
                 playTune("end");
                 lives--;
             }
 
             if ((sprite.type === 'item') &&
-                player.collidesWith(sprite)) {
+                map.player.collidesWith(sprite)) {
                 sprite.dead = true;
                 numberOfArtifactsCollected++;
                 playTune("eat");
@@ -443,7 +370,7 @@
         return kontra.gameLoop({
             update() {
                 map.update();
-                map.adjustCamera(player, playerSpeed);
+                map.adjustCamera(map.player, playerSpeed);
 
                 checkCollisions();
 
@@ -459,14 +386,14 @@
 
                 map.render(cx);
 
-                if (artifactCount) {
-                    drawStatusText(cx, `A: ${numberOfArtifactsCollected} / ${artifactCount}             L: ${lives}`);
+                if (map.artifactCount) {
+                    drawStatusText(cx, `A: ${numberOfArtifactsCollected} / ${map.artifactCount}             L: ${lives}`);
                 }
 
-                if (player.dead) {
+                if (map.player.dead) {
                     drawInfoText(cx, (lives > 0) ? "TRY AGAIN (ENTER)" : "GAME OVER! (ENTER)");
-                } else if ((time < HELP_TEXT_DISPLAY_TIME) && currentMap.text) {
-                    drawInfoText(cx, currentMap.text);
+                } else if ((time < HELP_TEXT_DISPLAY_TIME) && map.helpText) {
+                    drawInfoText(cx, map.helpText);
                 }
 
                 if (gameIsFinished() && 2 * HELP_TEXT_DISPLAY_TIME < time) {

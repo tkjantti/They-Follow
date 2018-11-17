@@ -35,14 +35,20 @@ class Map {
         return this._tileEngine.mapheight;
     }
 
+    get helpText() {
+        return this._mapData.text;
+    }
+
     constructor() {
         this.reset();
     }
 
     reset(mapData = null, tileEngine = null) {
-        this.mapData = mapData;
+        this._mapData = mapData;
         this._tileEngine = tileEngine;
         this.entities = [];
+        this.player = null;
+        this.artifactCount = 0;
 
         this.online = true;
 
@@ -62,6 +68,12 @@ class Map {
 
     add(entity) {
         this.entities.push(entity);
+        if (entity.type === 'item') {
+            this.artifactCount++;
+        }
+        if (entity.type === 'player') {
+            this.player = entity;
+        }
     }
 
     _collidesWithLayer(entity, layer) {
@@ -109,7 +121,7 @@ class Map {
         if (this._onlineToggleWaitTime < (now - this._onlineLatestToggleTime)) {
             this._onlineToggleSwitchTime = now;
             this._onlineLatestToggleTime = now;
-            this._onlineToggleWaitTime = this.online ? this.mapData.offline : this.mapData.online;
+            this._onlineToggleWaitTime = this.online ? this._mapData.offline : this._mapData.online;
         }
 
         if (this._onlineToggleSwitchTime &&
