@@ -65,8 +65,6 @@
         ""
     ];
 
-    let cx; // Canvas context
-
     let lives = MAX_LIVES;
 
     let mapIndex = 0;
@@ -376,6 +374,7 @@
 
             render() {
                 let time = performance.now() - map.startTime;
+                let cx = kontra.context;
 
                 map.render(cx);
 
@@ -399,15 +398,14 @@
 
     function main() {
         kontra.init();
-        cx = kontra.context;
-        drawStatusText(cx,beginingText);
+        drawStatusText(kontra.context,beginingText);
 
         MUSIC.initialize();
 
         kontra.assets.imagePath = 'images';
         kontra.assets.load('tilesheet.png', 'artifact.png', 'ghost.png', 'player.png')
             .then(() => {
-                drawInfoText(cx,readyText);
+                drawInfoText(kontra.context,readyText);
                 bindKeys();
             });
     }
