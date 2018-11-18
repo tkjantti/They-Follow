@@ -36,22 +36,6 @@ const LOADER = {};
     const TILE_WALL = 3;
     const TILE_BLOCKER = 4;
 
-    function findPositionsOf(map, element) {
-        let result = [];
-        let data = map.data;
-
-        for (let rowIndex = 0; rowIndex < data.length; rowIndex++) {
-            let row = data[rowIndex];
-            for (let colIndex = 0; colIndex < row.length; colIndex++) {
-                if (row[colIndex] === element) {
-                    result.push(kontra.vector(colIndex * TILE_WIDTH, rowIndex * TILE_HEIGHT));
-                }
-            }
-        }
-
-        return result;
-    }
-
     function mapToLayer(map, convert) {
         return map.data.reduce((total, current) => total + current).split('').map(convert);
     }
@@ -88,22 +72,20 @@ const LOADER = {};
 
         map.reset(mapData, tileEngine);
 
-        let playerPosition = findPositionsOf(mapData, '@')[0];
-        playerPosition.x += 5;
-        let player = createFunctions['@'](playerPosition);
-        map.add(player);
+        let data = mapData.data;
 
-        let artifactPositions = findPositionsOf(mapData, 'A').concat(findPositionsOf(mapData, 'a'));
-        artifactPositions.forEach(pos => {
-            pos.x += 5;
-            pos.y += 5;
-            let artifact = createFunctions.A(pos);
-            map.add(artifact);
-        });
+        for (let rowIndex = 0; rowIndex < data.length; rowIndex++) {
+            let row = data[rowIndex];
+            for (let colIndex = 0; colIndex < row.length; colIndex++) {
+                const element = row[colIndex];
+                const create = createFunctions[element];
 
-        findPositionsOf(mapData, 'G').forEach((pos, i) => {
-            let ghost = createFunctions.G(pos, i);
-            map.add(ghost);
-        });
+                if (create) {
+                    let position = kontra.vector(colIndex * TILE_WIDTH, rowIndex * TILE_HEIGHT);
+                    let entity = create(position);
+                    map.add(entity);
+                }
+            }
+        }
     };
 })(LOADER);

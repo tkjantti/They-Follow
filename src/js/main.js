@@ -100,15 +100,20 @@
         });
     }
 
-    function createGhost(position, number) {
+    function createGhost(position) {
         return kontra.sprite({
             type: 'ghost',
             position: position,
-            number: number,
             image: kontra.assets.images.ghost,
 
             // Adds some variance to how the ghosts approach the player.
             relativeDir: kontra.vector.getRandomDir(),
+
+            startWinningAnimation(winningAnimationNumber) {
+                this._target = null;
+                this._targetBegin = null;
+                this.winningAnimationNumber = winningAnimationNumber;
+            },
 
             update() {
                 let movement = null;
@@ -131,8 +136,8 @@
                     } else {
                         movement = this._target.minus(this.position).normalized();
                     }
-                } else if (gameIsFinished() && 1500 < (performance.now() - map.startTime)) {
-                    let angle = ghostAngle + this.number * 0.3;
+                } else if (this.winningAnimationNumber != null) {
+                    let angle = ghostAngle + this.winningAnimationNumber * 0.3;
                     let r = 180 + Math.sin(ghostAngle * 10) * 30;
                     let target = map.player.position.plus(
                         kontra.vector(Math.cos(angle) * r, Math.sin(angle) * r));
@@ -357,6 +362,12 @@
         }
     }
 
+    function startWinningAnimation() {
+        map.entities.filter(e => e.hasOwnProperty('startWinningAnimation')).forEach((e, i) => {
+            e.startWinningAnimation(i);
+        });
+    }
+
     function createGameLoop() {
         return kontra.gameLoop({
             update() {
@@ -365,8 +376,12 @@
 
                 checkCollisions();
 
-                if (mapIsFinished() && (mapIndex < maps.length - 1)) {
-                    createMap(maps[++mapIndex]);
+                if (mapIsFinished()) {
+                    if (mapIndex < maps.length - 1) {
+                        createMap(maps[++mapIndex]);
+                    } else if (1500 < (performance.now() - map.startTime)) {
+                        startWinningAnimation();
+                    }
                 }
 
                 ghostAngle += 0.005; // Update winning animation
