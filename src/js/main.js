@@ -22,21 +22,14 @@
  * SOFTWARE.
 */
 
-/* global CPlayer, maps */
+/* global maps */
 /* global VECTOR */
-/* global SONGS */
+/* global MUSIC */
 /* global Map */
 /* global LOADER */
 
 (function () {
     const clamp = VECTOR.clamp;
-
-    //----------------------------------------------------------------------------
-    // Music data section
-    //----------------------------------------------------------------------------
-    const mainTune = document.createElement("audio");
-    const eatTune = document.createElement("audio");
-    const endTune = document.createElement("audio");
 
     const playerSpeed = 1.5;
     const diagonalSpeedCoefficient = 0.707;
@@ -323,7 +316,7 @@
             if (!gameStarted) {
                 createMap(maps[mapIndex]);
                 gameStarted = true;
-                playTune("main");
+                MUSIC.playTune("main");
                 const loop = createGameLoop();
                 loop.start();
             }
@@ -338,7 +331,7 @@
                 }
 
                 createMap(maps[mapIndex]);
-                playTune("main");
+                MUSIC.playTune("main");
             }
         });
     }
@@ -353,7 +346,7 @@
                 !map.player.dead &&
                 !mapIsFinished()) {
                 map.player.dead = true;
-                playTune("end");
+                MUSIC.playTune("end");
                 lives--;
             }
 
@@ -361,7 +354,7 @@
                 map.player.collidesWith(sprite)) {
                 sprite.dead = true;
                 numberOfArtifactsCollected++;
-                playTune("eat");
+                MUSIC.playTune("eat");
             }
         }
     }
@@ -404,70 +397,12 @@
         });
     }
 
-    function playTune(tune) {
-        switch (tune) {
-            case "main": {
-                mainTune.currentTime = 0;
-                mainTune.volume = 0.9;
-                var promise = mainTune.play();
-                if (promise !== undefined) {
-                    promise.then(() => {
-                        // Autoplay started!
-                    }).catch(error => { // jshint ignore:line
-                        // Autoplay was prevented.
-                    });
-                }
-                break;
-            }
-            case "end": {
-                endTune.play();
-                var currentVolume = mainTune.volume;
-                var fadeOutInterval = setInterval(function () {
-                    currentVolume = (parseFloat(currentVolume) - 0.2).toFixed(1);
-                    if (currentVolume >= 0.0) {
-                        mainTune.volume = currentVolume;
-                    } else {
-                        mainTune.pause();
-                        clearInterval(fadeOutInterval);
-                    }
-                }, 100);
-                break;
-            }
-            case "eat": { 
-                eatTune.play();
-                break;
-            }
-        }
-    }
-    function initMusicPlayer(audioTrack, tune, isLooped) {
-        var songplayer = new CPlayer();
-        // Initialize music generation (player).
-        songplayer.init(tune);
-        // Generate music...
-        var done = false;
-        setInterval(function () {
-            if (done) {
-                return;
-            }
-            done = (songplayer.generate() >= 1);
-            if (done) {
-                // Put the generated song in an Audio element.
-                var wave = songplayer.createWave();
-                audioTrack.src = URL.createObjectURL(new Blob([wave], { type: "audio/wav" }));
-                audioTrack.loop = isLooped;
-                //audioTrack.play();
-            }
-        }, 0);
-    }
-
     function main() {
         kontra.init();
         cx = kontra.context;
         drawStatusText(cx,beginingText);
 
-        initMusicPlayer(mainTune, SONGS.song, true);
-        initMusicPlayer(eatTune, SONGS.eatEffect, false);
-        initMusicPlayer(endTune, SONGS.endSong, false);
+        MUSIC.initialize();
 
         kontra.assets.imagePath = 'images';
         kontra.assets.load('tilesheet.png', 'artifact.png', 'ghost.png', 'player.png')
