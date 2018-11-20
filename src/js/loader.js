@@ -82,7 +82,7 @@ const LOADER = {};
 
                 if (create) {
                     let position = kontra.vector(colIndex * TILE_WIDTH, rowIndex * TILE_HEIGHT);
-                    let entity = create(position);
+                    let entity = create(map, position);
                     map.add(entity);
                 }
             }

@@ -27,6 +27,7 @@
 /* global MUSIC */
 /* global Map */
 /* global LOADER */
+/* global GHOST */
 
 (function () {
     const clamp = VECTOR.clamp;
@@ -72,9 +73,6 @@
 
     let numberOfArtifactsCollected = 0;
 
-    // Angle for the ghosts in the winning animation.
-    let ghostAngle = 0;
-
     function mapIsFinished() {
         return numberOfArtifactsCollected === map.artifactCount;
     }
@@ -83,16 +81,7 @@
         return mapIndex >= (maps.length - 1);
     }
 
-    function getMovementBetween(spriteFrom, spriteTo) {
-        let fromX = spriteFrom.x + spriteFrom.width / 2;
-        let fromY = spriteFrom.y + spriteFrom.height / 2;
-        let toX = spriteTo.x + spriteTo.width / 2;
-        let toY = spriteTo.y + spriteTo.height / 2;
-
-        return kontra.vector(toX - fromX, toY - fromY);
-    }
-
-    function createArtifact(position) {
+    function createArtifact(map, position) {
         return kontra.sprite({
             type: 'item',
             position: position,
@@ -100,124 +89,7 @@
         });
     }
 
-    function createGhost(position) {
-        return kontra.sprite({
-            type: 'ghost',
-            position: position,
-            image: kontra.assets.images.ghost,
-
-            // Adds some variance to how the ghosts approach the player.
-            relativeDir: kontra.vector.getRandomDir(),
-
-            startWinningAnimation(winningAnimationNumber) {
-                this._target = null;
-                this._targetBegin = null;
-                this.winningAnimationNumber = winningAnimationNumber;
-            },
-
-            update() {
-                let movement = null;
-
-                if (map.collidesWithBlockers(this)) {
-                    this.color = 'yellow';
-                    let randomDirection = kontra.vector(
-                        (-0.5 + Math.random()) * 20,
-                        (-0.5 + Math.random()) * 20);
-                    this.move(randomDirection);
-                    return;
-                } else if (this.color !== 'red') {
-                    this.color = 'red';
-                }
-
-                if (this._target) {
-                    if (1000 < performance.now() - this._targetBegin) {
-                        this._target = null;
-                        this._targetBegin = null;
-                    } else {
-                        movement = this._target.minus(this.position).normalized();
-                    }
-                } else if (this.winningAnimationNumber != null) {
-                    let angle = ghostAngle + this.winningAnimationNumber * 0.3;
-                    let r = 180 + Math.sin(ghostAngle * 10) * 30;
-                    let target = map.player.position.plus(
-                        kontra.vector(Math.cos(angle) * r, Math.sin(angle) * r));
-                    movement = target.minus(this.position).normalized();
-                } else if (!map.player.dead) {
-                    let target = this._getPlayerTarget();
-                    if (target) {
-                        movement = target.minus(this.position).normalized();
-                    }
-                }
-
-                if (movement) {
-                    let newBounds = {
-                        x: this.x + movement.x,
-                        y: this.y + movement.y,
-                        width: this.width,
-                        height: this.height,
-                    };
-
-                    if (!map.collidesWithBlockers(newBounds)) {
-                        this.move(movement);
-                    } else {
-                        let newTarget = kontra.vector(this.x, this.y);
-
-                        // Back off a little.
-                        newTarget.x -= movement.x * 5;
-                        newTarget.y -= movement.y * 5;
-
-                        let toPlayer = getMovementBetween(this, map.player);
-                        let dodgeHorizontally = Math.abs(toPlayer.x) < Math.abs(toPlayer.y);
-                        let dodgeAmount = 50;
-
-                        if (dodgeHorizontally) {
-                            newTarget.x += (Math.random() >= 0.5) ? dodgeAmount : -dodgeAmount;
-                        } else {
-                            newTarget.y += (Math.random() >= 0.5) ? dodgeAmount : -dodgeAmount;
-                        }
-
-                        this._target = newTarget;
-                        this._targetBegin = performance.now();
-                    }
-                }
-            },
-
-            // Moves by the given vector, keeping within level bounds.
-            move(movement) {
-                let newPosition = kontra.vector(
-                    clamp(this.x + movement.x, 0, map.width - this.width),
-                    clamp(this.y + movement.y, 0, map.height - this.height));
-                this.position = newPosition;
-            },
-
-            /*
-             * Returns the position for approaching the player or null
-             * if the player is too far.
-             */
-            _getPlayerTarget() {
-                let distanceToPlayer = VECTOR.getDistance(this.position, map.player.position);
-                if (distanceToPlayer > 400) {
-                    return null;
-                }
-
-                let target = kontra.vector(
-                    map.player.x + map.player.width / 2,
-                    map.player.y + map.player.height / 2);
-
-                // When offline, approach the player from different
-                // directions so that the ghosts don't slump together
-                // and give a feeling of surrounding the player.
-                if (!map.online && distanceToPlayer > 140) {
-                    target.x += this.relativeDir.x * 130;
-                    target.y += this.relativeDir.y * 130;
-                }
-
-                return target;
-            },
-        });
-    }
-
-    function createPlayer(position) {
+    function createPlayer(map, position) {
         return kontra.sprite({
             type: 'player',
             position: position,
@@ -295,7 +167,7 @@
             '@': createPlayer,
             'A': createArtifact,
             'a': createArtifact,
-            'G': createGhost,
+            'G': GHOST.create,
         };
         LOADER.loadMap(mapData, map, createFunctions);
     }
@@ -384,7 +256,7 @@
                     }
                 }
 
-                ghostAngle += 0.005; // Update winning animation
+                GHOST.winningAnimationAngle += 0.005; // Update winning animation
             },
 
             render() {
