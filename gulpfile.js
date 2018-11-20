@@ -3,73 +3,39 @@
 
 const gulp = require('gulp');
 const browserSync = require('browser-sync');
-const replaceHTML = require('gulp-html-replace');
-const rename = require('gulp-rename');
 const deleteFiles = require('gulp-rimraf');
 const minifyHTML = require('gulp-minify-html');
 const minifyCSS = require('gulp-clean-css');
 const minifyJS = require('gulp-terser');
-const concat = require('gulp-concat');
+const useref = require('gulp-useref');
+const gulpIf = require('gulp-if');
 const imagemin = require('gulp-imagemin');
 const runSequence = require('run-sequence');
 const jshint = require('gulp-jshint');
 const ghPages = require('gulp-gh-pages');
-
-const paths = {
-    src: {
-        html: 'src/index.html',
-        css: 'src/css/*.css',
-        js: ['src/js/kontra.js', 'src/js/player-small.js', 'src/js/maps.js', 'src/js/main.js', 'src/js/*.js'],
-        jsNoLibraries: ['src/js/maps.js', 'src/js/main.js'],
-        images: 'src/images/**',
-    },
-    dist: {
-        dir: 'dist',
-        html: 'index.html',
-        css: 'css/style.min.css',
-        js: 'js/script.min.js',
-        images: 'dist/images',
-    },
-};
 
 gulp.task('cleanDist', () => {
     return gulp.src('dist/*', { read: false })
         .pipe(deleteFiles());
 });
 
-gulp.task('buildHTML', () => {
-    return gulp.src(paths.src.html)
-        .pipe(replaceHTML({
-            css: paths.dist.css,
-            js: paths.dist.js,
-        }))
-        .pipe(minifyHTML())
-        .pipe(rename(paths.dist.html))
-        .pipe(gulp.dest(paths.dist.dir));
-});
-
-gulp.task('buildCSS', () => {
-    return gulp.src(paths.src.css)
-        .pipe(minifyCSS())
-        .pipe(rename(paths.dist.css))
-        .pipe(gulp.dest(paths.dist.dir));
-});
-
-gulp.task('buildJS', () => {
-    return gulp.src(paths.src.js)
-        .pipe(concat(paths.dist.js))
-        .pipe(minifyJS())
-        .pipe(gulp.dest(paths.dist.dir));
+gulp.task('buildSourceFiles', () => {
+    return gulp.src('src/index.html')
+        .pipe(useref())
+        .pipe(gulpIf('*.js', minifyJS()))
+        .pipe(gulpIf('*.html', minifyHTML()))
+        .pipe(gulpIf('*.css', minifyCSS()))
+        .pipe(gulp.dest('dist'));
 });
 
 gulp.task('optimizeImages', () => {
-    return gulp.src(paths.src.images)
+    return gulp.src('src/images/**')
         .pipe(imagemin())
-        .pipe(gulp.dest(paths.dist.images));
+        .pipe(gulp.dest('dist/images'));
 });
 
 gulp.task('lintJS', () => {
-    return gulp.src(paths.src.jsNoLibraries)
+    return gulp.src(['src/js/*.js', '!./src/js/kontra.js', '!./src/js/player-small.js'])
         .pipe(jshint())
         .pipe(jshint.reporter('default'));
 });
@@ -78,7 +44,7 @@ gulp.task('build', callback => {
     runSequence(
         ['lintJS'],
         ['cleanDist'],
-        ['buildCSS', 'buildHTML', 'buildJS', 'optimizeImages'],
+        ['buildSourceFiles', 'optimizeImages'],
         callback);
 });
 
