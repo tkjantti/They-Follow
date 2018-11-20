@@ -40,9 +40,13 @@ const LOADER = {};
         return map.data.reduce((total, current) => total + current).split('').map(convert);
     }
 
-    exports.loadMap = function (mapData, map, createFunctions) {
+    function isOneOf(char, array) {
+        return array.indexOf(char) !== -1;
+    }
+
+    exports.loadMap = function (mapData, map, layers, createFunctions) {
         const blockerData = mapToLayer(
-            mapData, tile => (tile === '#' || tile === 'A') ? TILE_BLOCKER : 0);
+            mapData, tile => isOneOf(tile, layers.blocker) ? TILE_BLOCKER : 0);
 
         let tileEngine = kontra.tileEngine({
             tilewidth: TILE_WIDTH,
@@ -57,10 +61,10 @@ const LOADER = {};
                 name: Map.LAYER_GROUND,
                 data: mapToLayer(
                     mapData,
-                    tile => (tile === ' ' || tile === 'G' || tile === '@' || tile === 'a') ? TILE_GROUND : 0),
+                    tile => isOneOf(tile, layers.ground) ? TILE_GROUND : 0),
             }, {
                 name: Map.LAYER_WALLS,
-                data: mapToLayer(mapData, tile => tile === '=' ? TILE_WALL : 0),
+                data: mapToLayer(mapData, tile => isOneOf(tile, layers.wall) ? TILE_WALL : 0),
             }, {
                 name: Map.LAYER_FLASHING,
                 data: blockerData,

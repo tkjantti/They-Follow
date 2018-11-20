@@ -93,7 +93,12 @@
             'a': createArtifact,
             'G': GHOST.create,
         };
-        LOADER.loadMap(mapData, map, createFunctions);
+        let layers = {
+            ground: [' ', 'G', '@', 'a'],
+            wall: ['='],
+            blocker: ['#', 'A'],
+        };
+        LOADER.loadMap(mapData, map, layers, createFunctions);
     }
 
     function drawStatusText(cx, text) {
