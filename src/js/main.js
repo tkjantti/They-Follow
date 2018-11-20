@@ -23,18 +23,13 @@
 */
 
 /* global maps */
-/* global VECTOR */
 /* global MUSIC */
 /* global Map */
 /* global LOADER */
 /* global GHOST */
+/* global PLAYER */
 
 (function () {
-    const clamp = VECTOR.clamp;
-
-    const playerSpeed = 1.5;
-    const diagonalSpeedCoefficient = 0.707;
-
     const HELP_TEXT_DISPLAY_TIME = 3000;
 
     const MAX_LIVES = 5;
@@ -89,82 +84,11 @@
         });
     }
 
-    function createPlayer(map, position) {
-        return kontra.sprite({
-            type: 'player',
-            position: position,
-            image: kontra.assets.images.player,
-
-            collidesWith(other) {
-                return this.x < other.x + other.width &&
-                    this.x + this.width > other.x &&
-                    this.y < other.y + other.height &&
-                    this.y + this.height > other.y;
-            },
-
-            update() {
-                let xDiff = 0, yDiff = 0;
-
-                if (kontra.keys.pressed('left')) {
-                    xDiff = -playerSpeed;
-                } else if (kontra.keys.pressed('right')) {
-                    xDiff = playerSpeed;
-                }
-
-                if (kontra.keys.pressed('up')) {
-                    yDiff = -playerSpeed;
-                } else if (kontra.keys.pressed('down')) {
-                    yDiff = playerSpeed;
-                }
-
-                if (xDiff && yDiff) {
-                    xDiff *= diagonalSpeedCoefficient;
-                    yDiff *= diagonalSpeedCoefficient;
-                }
-
-                let newBounds = {
-                    // keep within the map
-                    x: clamp(this.x + xDiff, 0, map.width - this.width),
-                    y: clamp(this.y + yDiff, 0, map.height - this.height),
-
-                    width: this.width,
-                    height: this.height,
-                };
-
-                if (!map.collidesWithWalls(newBounds)) {
-                    this.position = kontra.vector(newBounds.x, newBounds.y);
-                } else if (xDiff && yDiff) {
-                    // Check if can move horizontally.
-                    newBounds = {
-                        x: clamp(this.x + xDiff, 0, map.width - this.width),
-                        y: this.y,
-                        width: this.width,
-                        height: this.height,
-                    };
-                    if (!map.collidesWithWalls(newBounds)) {
-                        this.position = kontra.vector(newBounds.x, newBounds.y);
-                    } else {
-                        // Check if can move vertically.
-                        newBounds = {
-                            x: this.x,
-                            y: clamp(this.y + yDiff, 0, map.height - this.height),
-                            width: this.width,
-                            height: this.height,
-                        };
-                        if (!map.collidesWithWalls(newBounds)) {
-                            this.position = kontra.vector(newBounds.x, newBounds.y);
-                        }
-                    }
-                }
-            },
-        });
-    }
-
     function createMap(mapData) {
         numberOfArtifactsCollected = 0;
 
         let createFunctions = {
-            '@': createPlayer,
+            '@': PLAYER.create,
             'A': createArtifact,
             'a': createArtifact,
             'G': GHOST.create,
@@ -244,7 +168,7 @@
         return kontra.gameLoop({
             update() {
                 map.update();
-                map.adjustCamera(map.player, playerSpeed);
+                map.adjustCamera(map.player, PLAYER.getSpeed());
 
                 checkCollisions();
 
