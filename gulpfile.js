@@ -13,6 +13,7 @@ const imagemin = require('gulp-imagemin');
 const runSequence = require('run-sequence');
 const jshint = require('gulp-jshint');
 const ghPages = require('gulp-gh-pages');
+const preprocess = require('gulp-preprocess');
 
 gulp.task('cleanDist', () => {
     return gulp.src('dist/*', { read: false })
@@ -22,6 +23,7 @@ gulp.task('cleanDist', () => {
 gulp.task('buildSourceFiles', () => {
     return gulp.src('src/index.html')
         .pipe(useref())
+        .pipe(preprocess({context: { DEBUG: false }}))
         .pipe(gulpIf('*.js', minifyJS()))
         .pipe(gulpIf('*.html', minifyHTML()))
         .pipe(gulpIf('*.css', minifyCSS()))
@@ -56,18 +58,30 @@ gulp.task('deploy', ['build'], function () {
 gulp.task('browserSync', ['lintJS'], () => {
     browserSync({
         server: {
-            baseDir: 'src'
+            baseDir: 'debug'
         },
         open: false,
     });
 });
 
-gulp.task('watchJS', ['lintJS'], browserSync.reload);
+gulp.task('copyDebugImages', () => {
+    return gulp.src('src/images/**')
+        .pipe(gulp.dest('debug/images'));
+});
 
-gulp.task('watch', ['browserSync'], () => {
-    gulp.watch('src/*.html', browserSync.reload);
-    gulp.watch('src/css/**/*.css', browserSync.reload);
-    gulp.watch('src/js/**/*.js', ['watchJS']);
+gulp.task('buildDebug', ['lintJS', 'copyDebugImages'], () => {
+    return gulp.src('src/index.html')
+        .pipe(useref())
+        .pipe(preprocess({context: { DEBUG: true }}))
+        .pipe(gulp.dest('debug'));
+});
+
+gulp.task('watchBuild', ['buildDebug'], browserSync.reload);
+
+gulp.task('watch', ['browserSync', 'watchBuild'], () => {
+    gulp.watch('src/*.html', ['watchBuild']);
+    gulp.watch('src/css/**/*.css', ['watchBuild']);
+    gulp.watch('src/js/**/*.js', ['watchBuild']);
 });
 
 gulp.task('default', ['watch']);
