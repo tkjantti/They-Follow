@@ -36,6 +36,9 @@ const PLAYER = {};
     const playerSpeed = 1.5;
     const diagonalSpeedCoefficient = 0.707;
 
+    const xMargin = 5;
+    const yMargin = 4;
+
     exports.getSpeed = function () {
         return playerSpeed;
     };
@@ -73,40 +76,42 @@ const PLAYER = {};
                     yDiff *= diagonalSpeedCoefficient;
                 }
 
-                let newBounds = {
-                    // keep within the map
-                    x: clamp(this.x + xDiff, 0, map.width - this.width),
-                    y: clamp(this.y + yDiff, 0, map.height - this.height),
+                let newX = this.x + xDiff;
+                let newY = this.y + yDiff;
+                let collisionBounds = this._getBoundingBox(newX, newY);
 
-                    width: this.width,
-                    height: this.height,
-                };
-
-                if (!map.collidesWithWalls(newBounds)) {
-                    this.position = kontra.vector(newBounds.x, newBounds.y);
+                if (!map.collidesWithWalls(collisionBounds)) {
+                    this._setPosition(collisionBounds);
                 } else if (xDiff && yDiff) {
                     // Check if can move horizontally.
-                    newBounds = {
-                        x: clamp(this.x + xDiff, 0, map.width - this.width),
-                        y: this.y,
-                        width: this.width,
-                        height: this.height,
-                    };
-                    if (!map.collidesWithWalls(newBounds)) {
-                        this.position = kontra.vector(newBounds.x, newBounds.y);
+                    collisionBounds = this._getBoundingBox(newX, this.y);
+                    if (!map.collidesWithWalls(collisionBounds)) {
+                        this._setPosition(collisionBounds);
                     } else {
                         // Check if can move vertically.
-                        newBounds = {
-                            x: this.x,
-                            y: clamp(this.y + yDiff, 0, map.height - this.height),
-                            width: this.width,
-                            height: this.height,
-                        };
-                        if (!map.collidesWithWalls(newBounds)) {
-                            this.position = kontra.vector(newBounds.x, newBounds.y);
+                        collisionBounds = this._getBoundingBox(this.x, newY);
+                        if (!map.collidesWithWalls(collisionBounds)) {
+                            this._setPosition(collisionBounds);
                         }
                     }
                 }
+            },
+
+            _setPosition(bounds) {
+                let x = clamp(bounds.x, 0, map.width - (bounds.width));
+                let y = clamp(bounds.y, 0, map.height - (bounds.height));
+                this.position = kontra.vector(
+                    x - xMargin,
+                    y - yMargin);
+            },
+
+            _getBoundingBox(x, y) {
+                return {
+                    x: x + xMargin,
+                    y: y + yMargin,
+                    width: this.width - 2 * xMargin,
+                    height: this.height - 2 * yMargin,
+                };
             },
         });
     };
