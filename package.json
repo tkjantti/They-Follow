@@ -4,6 +4,7 @@
     "description": "",
     "private": true,
     "scripts": {
+        "start": "gulp",
         "build": "gulp build",
         "deploy": "gulp deploy",
         "watch": "gulp"

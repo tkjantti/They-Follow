@@ -18,7 +18,7 @@ First, install dependencies with
 
 To run the game in the browser for development:
 
-    $ npm run watch
+    $ npm start
 
 Creating a minified build to the dist folder:
 
