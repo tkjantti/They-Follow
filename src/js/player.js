@@ -78,18 +78,18 @@ const PLAYER = {};
 
                 let newX = this.x + xDiff;
                 let newY = this.y + yDiff;
-                let collisionBounds = this._getBoundingBox(newX, newY);
+                let collisionBounds = this.getBoundingBox(newX, newY);
 
                 if (!map.collidesWithWalls(collisionBounds)) {
                     this._setPosition(collisionBounds);
                 } else if (xDiff && yDiff) {
                     // Check if can move horizontally.
-                    collisionBounds = this._getBoundingBox(newX, this.y);
+                    collisionBounds = this.getBoundingBox(newX, this.y);
                     if (!map.collidesWithWalls(collisionBounds)) {
                         this._setPosition(collisionBounds);
                     } else {
                         // Check if can move vertically.
-                        collisionBounds = this._getBoundingBox(this.x, newY);
+                        collisionBounds = this.getBoundingBox(this.x, newY);
                         if (!map.collidesWithWalls(collisionBounds)) {
                             this._setPosition(collisionBounds);
                         }
@@ -105,7 +105,7 @@ const PLAYER = {};
                     y - yMargin);
             },
 
-            _getBoundingBox(x, y) {
+            getBoundingBox(x = this.x, y = this.y) {
                 return {
                     x: x + xMargin,
                     y: y + yMargin,
