@@ -5,6 +5,7 @@
     "private": true,
     "scripts": {
         "start": "gulp",
+        "debug": "gulp debug",
         "build": "gulp build",
         "deploy": "gulp deploy",
         "watch": "gulp"

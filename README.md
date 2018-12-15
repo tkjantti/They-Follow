@@ -20,6 +20,10 @@ To run the game in the browser for development:
 
     $ npm start
 
+Running the game in visual debugging mode:
+
+    $ npm run debug
+
 Creating a minified build to the dist folder:
 
     $ npm run build

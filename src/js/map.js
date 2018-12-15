@@ -148,7 +148,7 @@ class Map {
         for (let i = 0; i < this.entities.length; i++) {
             let entity = this.entities[i];
             entity.render();
-            // @if DEBUG
+            // @if VISUAL_DEBUG
             this._renderBoundingBox(entity);
             // @endif
 
@@ -156,7 +156,7 @@ class Map {
         context.restore();
     }
 
-    // @if DEBUG
+    // @if VISUAL_DEBUG
     _renderBoundingBox(entity) {
         if (!entity.getBoundingBox) {
             return;
