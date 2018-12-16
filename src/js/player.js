@@ -50,10 +50,12 @@ const PLAYER = {};
             image: kontra.assets.images.player,
 
             collidesWith(other) {
-                return this.x < other.x + other.width &&
-                    this.x + this.width > other.x &&
-                    this.y < other.y + other.height &&
-                    this.y + this.height > other.y;
+                let selfBounds = this.getBoundingBox();
+                let otherBounds = other.getBoundingBox ? other.getBoundingBox() : other;
+                return selfBounds.x < otherBounds.x + otherBounds.width &&
+                    selfBounds.x + selfBounds.width > otherBounds.x &&
+                    selfBounds.y < otherBounds.y + otherBounds.height &&
+                    selfBounds.y + selfBounds.height > otherBounds.y;
             },
 
             update() {

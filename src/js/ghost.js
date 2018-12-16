@@ -33,6 +33,15 @@ const GHOST = {};
 
     const clamp = VECTOR.clamp;
 
+    const xMargin = 5;
+    const yMargin = 6;
+
+    /*
+     * Y Offset so that the collision shape better fits
+     * into the shape of the ghost.
+     */
+    const yOffset = 3;
+
     function getMovementBetween(spriteFrom, spriteTo) {
         let fromX = spriteFrom.x + spriteFrom.width / 2;
         let fromY = spriteFrom.y + spriteFrom.height / 2;
@@ -158,6 +167,15 @@ const GHOST = {};
                 }
 
                 return target;
+            },
+
+            getBoundingBox(x = this.x, y = this.y) {
+                return {
+                    x: x + xMargin,
+                    y: y + yMargin + yOffset,
+                    width: this.width - 2 * xMargin,
+                    height: this.height - 2 * yMargin,
+                };
             },
         });
     };
