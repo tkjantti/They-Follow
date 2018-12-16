@@ -148,9 +148,27 @@ class Map {
         for (let i = 0; i < this.entities.length; i++) {
             let entity = this.entities[i];
             entity.render();
+            // @if VISUAL_DEBUG
+            this._renderBoundingBox(entity);
+            // @endif
+
         }
         context.restore();
     }
+
+    // @if VISUAL_DEBUG
+    _renderBoundingBox(entity) {
+        if (!entity.getBoundingBox) {
+            return;
+        }
+
+        var box = entity.getBoundingBox();
+        var cx = kontra.context;
+
+        cx.strokeStyle = 'white';
+        cx.strokeRect(box.x, box.y, box.width, box.height);
+    }
+    // @endif
 }
 
 Map.LAYER_GROUND = 'G';

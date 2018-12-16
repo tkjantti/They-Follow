@@ -4,6 +4,8 @@
     "description": "",
     "private": true,
     "scripts": {
+        "start": "gulp",
+        "debug": "gulp debug",
         "build": "gulp build",
         "deploy": "gulp deploy",
         "watch": "gulp"
@@ -29,6 +31,7 @@
         "run-sequence": "^2.2.1"
     },
     "dependencies": {
-        "gulp-gh-pages": "^0.5.4"
+        "gulp-gh-pages": "^0.5.4",
+        "gulp-preprocess": "^3.0.1"
     }
 }

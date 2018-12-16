@@ -114,15 +114,27 @@
         cx.fillText(text, kontra.canvas.width / 2 - textWidth / 2, 120);
     }
 
+    function startLevel() {
+        createMap(maps[mapIndex]);
+        MUSIC.playTune("main");
+    }
+
+    function startGame() {
+        if (gameStarted) {
+            return;
+        }
+
+        startLevel();
+        gameStarted = true;
+        const loop = createGameLoop();
+        loop.start();
+    }
+
     function bindKeys() {
         kontra.keys.bind('enter', () => {
-            // Start the level when enter is pressed.
+            // Start the game when enter is pressed.
             if (!gameStarted) {
-                createMap(maps[mapIndex]);
-                gameStarted = true;
-                MUSIC.playTune("main");
-                const loop = createGameLoop();
-                loop.start();
+                startGame();
             }
 
             // Restart the level when enter is pressed.
@@ -134,8 +146,7 @@
                     lives = MAX_LIVES;
                 }
 
-                createMap(maps[mapIndex]);
-                MUSIC.playTune("main");
+                startLevel();
             }
         });
     }
@@ -223,6 +234,10 @@
             .then(() => {
                 drawInfoText(kontra.context,readyText);
                 bindKeys();
+
+                // @if DEBUG
+                startGame();
+                // @endif
             });
     }
 

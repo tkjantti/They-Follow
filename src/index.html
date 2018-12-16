@@ -8,6 +8,18 @@
   </head>
 
   <body>
+    <!-- @if DEBUG -->
+    <div style="margin: 10px">
+      <div style="color: white; background: blue; display: inline-block; padding: 2px 5px">
+        DEBUG
+      </div>
+      <!-- @endif -->
+      <!-- @if VISUAL_DEBUG -->
+      <div style="color: white; background: blue; display: inline-block; padding: 2px 5px">
+        VISUAL_DEBUG
+      </div>
+    </div>
+    <!-- @endif -->
     <div id="board">
       <canvas width="640" height="480"></canvas>
       <pre>
