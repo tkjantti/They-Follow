@@ -87,11 +87,13 @@ class Map {
     }
 
     collidesWithWalls(entity) {
-        return this._collidesWithLayer(entity, Map.LAYER_WALLS);
+        return this._collidesWithLayer(entity, Map.LAYER_WALLS) ||
+            this._collidesWithLayer(entity, Map.LAYER_SOLID);
     }
 
     collidesWithBlockers(entity) {
-        return this.online && this._collidesWithLayer(entity, Map.LAYER_BLOCKERS);
+        return (this.online && this._collidesWithLayer(entity, Map.LAYER_BLOCKERS)) ||
+            this._collidesWithLayer(entity, Map.LAYER_SOLID);
     }
 
     adjustCamera(position, speed) {
