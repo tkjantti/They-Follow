@@ -84,6 +84,16 @@
         });
     }
 
+    function createSwitch(map, position) {
+        return kontra.sprite({
+            type: 'switch',
+            width: 32,
+            height: 32,
+            position: position,
+            color: 'orange',
+        });
+    }
+
     function createMap(mapData) {
         numberOfArtifactsCollected = 0;
 
@@ -92,9 +102,10 @@
             'A': createArtifact,
             'a': createArtifact,
             'G': GHOST.create,
+            'o': createSwitch,
         };
         let layers = {
-            ground: [' ', 'G', '@', 'a'],
+            ground: [' ', 'G', '@', 'a', 'o'],
             wall: ['='],
             blocker: ['#', 'A'],
             solid: ['O'],

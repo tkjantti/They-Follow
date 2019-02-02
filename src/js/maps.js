@@ -34,7 +34,7 @@ const maps = [
             "                    ",
             "                    ",
             "                    ",
-            "         OOOOO      ",
+            "     o   OOOOO      ",
             "         O  GO      ",
             "     @   O a O      ",
             "         O   O      ",
