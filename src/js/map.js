@@ -136,6 +136,7 @@ class Map {
     render(context) {
         this._tileEngine.renderLayer(Map.LAYER_GROUND);
         this._tileEngine.renderLayer(Map.LAYER_WALLS);
+        this._tileEngine.renderLayer(Map.LAYER_SOLID);
         if (this._onlineToggleSwitchTime && (Math.random() >= 0.5)) {
             this._tileEngine.renderLayer(Map.LAYER_FLASHING);
         }
@@ -174,4 +175,5 @@ class Map {
 Map.LAYER_GROUND = 'G';
 Map.LAYER_FLASHING = 'F';
 Map.LAYER_BLOCKERS = 'B';
+Map.LAYER_SOLID = 'S';
 Map.LAYER_WALLS = 'W';

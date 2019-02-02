@@ -97,6 +97,7 @@
             ground: [' ', 'G', '@', 'a'],
             wall: ['='],
             blocker: ['#', 'A'],
+            solid: ['O'],
         };
         LOADER.loadMap(mapData, map, layers, createFunctions);
     }
