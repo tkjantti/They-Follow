@@ -26,6 +26,44 @@
 
 const ONLINE_TOGGLE_DELAY = 1200;
 
+class Layer {
+    constructor(online = undefined, offline = undefined) {
+        this.online = true;
+        this.toggleRequestTime = null;
+        if (online && offline) {
+            this.onlineTime = online;
+            this.offlineTime = offline;
+            this.toggleWaitTime = online;
+            this.autoToggleTime = performance.now();
+        }
+    }
+
+    toggle() {
+        if (!this.toggleRequestTime) {
+            let now = performance.now();
+            this.toggleRequestTime = now;
+        }
+    }
+
+    isVisible() {
+        return this.toggleRequestTime ? (Math.random() >= 0.5) : this.online;
+    }
+
+    update(now) {
+        if (this.toggleWaitTime && this.toggleWaitTime < (now - this.autoToggleTime)) {
+            this.toggleRequestTime = now;
+            this.autoToggleTime = now;
+            this.toggleWaitTime = this.online ? this.offlineTime : this.onlineTime;
+        }
+
+        if (this.toggleRequestTime &&
+            ONLINE_TOGGLE_DELAY < (now - this.toggleRequestTime)) {
+            this.online = !this.online;
+            this.toggleRequestTime = null;
+        }
+    }
+}
+
 class Map {
     get width() {
         return this._tileEngine.mapwidth;
@@ -44,25 +82,19 @@ class Map {
     }
 
     reset(mapData = null, tileEngine = null) {
+        const now = performance.now();
+
+        let online = mapData ? mapData.online : null;
+        let offline = mapData ? mapData.offline : null;
         this._mapData = mapData;
         this._tileEngine = tileEngine;
+        this.layersWithToggle = {
+            [Map.LAYER_SOLID]: new Layer(),
+            [Map.LAYER_BLOCKERS]: new Layer(online, offline),
+        };
         this.entities = [];
         this.player = null;
         this.artifactCount = 0;
-
-        this.online = true;
-
-        // When online mode was requested on/off (it takes a little time to toggle it).
-        this._onlineToggleSwitchTime = null;
-
-        const now = performance.now();
-
-        // Last time when online mode was toggled on/off.
-        this._onlineLatestToggleTime = now;
-
-        // How long to wait until next on/off toggle.
-        this._onlineToggleWaitTime = mapData ? mapData.online : null;
-
         this.startTime = now;
     }
 
@@ -76,14 +108,19 @@ class Map {
         }
     }
 
-    _collidesWithLayer(entity, layer) {
+    _collidesWithLayer(entity, layerId) {
         let cameraCoordinateBounds = {
             x: -this._tileEngine.sx + entity.x,
             y: -this._tileEngine.sy + entity.y,
             width: entity.width,
             height: entity.height
         };
-        return this._tileEngine.layerCollidesWith(layer, cameraCoordinateBounds);
+        var layer = this.layersWithToggle[layerId];
+        if (layer) {
+            return layer.online &&
+                this._tileEngine.layerCollidesWith(layerId, cameraCoordinateBounds);
+        }
+        return this._tileEngine.layerCollidesWith(layerId, cameraCoordinateBounds);
     }
 
     collidesWithWalls(entity) {
@@ -112,6 +149,13 @@ class Map {
         }
     }
 
+    toggleLayer(layerId) {
+        let layer = this.layersWithToggle[layerId];
+        if (layer) {
+            layer.toggle();
+        }
+    }
+
     update() {
         let now = performance.now();
 
@@ -120,28 +164,27 @@ class Map {
             entity.update();
         }
 
-        if (this._onlineToggleWaitTime < (now - this._onlineLatestToggleTime)) {
-            this._onlineToggleSwitchTime = now;
-            this._onlineLatestToggleTime = now;
-            this._onlineToggleWaitTime = this.online ? this._mapData.offline : this._mapData.online;
-        }
+        let layer = this.layersWithToggle[Map.LAYER_SOLID];
+        layer.update(now);
 
-        if (this._onlineToggleSwitchTime &&
-            ONLINE_TOGGLE_DELAY < (now - this._onlineToggleSwitchTime)) {
-            this.online = !this.online;
-            this._onlineToggleSwitchTime = null;
-        }
+        layer = this.layersWithToggle[Map.LAYER_BLOCKERS];
+        layer.update(now);
 
         this.entities = this.entities.filter(s => !s.dead);
+    }
+
+    _renderLayer(layerId) {
+        var layer = this.layersWithToggle[layerId];
+        if (layer.isVisible()) {
+            this._tileEngine.renderLayer(layerId);
+        }
     }
 
     render(context) {
         this._tileEngine.renderLayer(Map.LAYER_GROUND);
         this._tileEngine.renderLayer(Map.LAYER_WALLS);
-        this._tileEngine.renderLayer(Map.LAYER_SOLID);
-        if (this.online || (this._onlineToggleSwitchTime && (Math.random() >= 0.5))) {
-            this._tileEngine.renderLayer(Map.LAYER_BLOCKERS);
-        }
+        this._renderLayer(Map.LAYER_SOLID);
+        this._renderLayer(Map.LAYER_BLOCKERS);
 
         context.save();
         context.translate(-this._tileEngine.sx, -this._tileEngine.sy);
