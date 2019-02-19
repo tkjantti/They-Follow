@@ -26,7 +26,13 @@
 
 const ONLINE_TOGGLE_DELAY = 1200;
 
-class Layer {
+class StableLayer {
+    toggle() {}
+    isVisible() { return true; }
+    update() {}
+}
+
+class ToggleLayer {
     constructor(online = undefined, offline = undefined) {
         this.online = true;
         this.toggleRequestTime = null;
@@ -88,9 +94,11 @@ class Map {
         let offline = mapData ? mapData.offline : null;
         this._mapData = mapData;
         this._tileEngine = tileEngine;
-        this.layersWithToggle = {
-            [Map.LAYER_SOLID]: new Layer(),
-            [Map.LAYER_BLOCKERS]: new Layer(online, offline),
+        this.layers = {
+            [Map.LAYER_GROUND]: new StableLayer(),
+            [Map.LAYER_WALLS]: new StableLayer(),
+            [Map.LAYER_SOLID]: new ToggleLayer(),
+            [Map.LAYER_BLOCKERS]: new ToggleLayer(online, offline),
         };
         this.entities = [];
         this.player = null;
@@ -115,12 +123,9 @@ class Map {
             width: entity.width,
             height: entity.height
         };
-        var layer = this.layersWithToggle[layerId];
-        if (layer) {
-            return layer.online &&
-                this._tileEngine.layerCollidesWith(layerId, cameraCoordinateBounds);
-        }
-        return this._tileEngine.layerCollidesWith(layerId, cameraCoordinateBounds);
+        var layer = this.layers[layerId];
+        return layer.online &&
+            this._tileEngine.layerCollidesWith(layerId, cameraCoordinateBounds);
     }
 
     collidesWithWalls(entity) {
@@ -129,7 +134,7 @@ class Map {
     }
 
     collidesWithBlockers(entity) {
-        return (this.online && this._collidesWithLayer(entity, Map.LAYER_BLOCKERS)) ||
+        return this._collidesWithLayer(entity, Map.LAYER_BLOCKERS) ||
             this._collidesWithLayer(entity, Map.LAYER_SOLID);
     }
 
@@ -150,7 +155,7 @@ class Map {
     }
 
     toggleLayer(layerId) {
-        let layer = this.layersWithToggle[layerId];
+        let layer = this.layers[layerId];
         if (layer) {
             layer.toggle();
         }
@@ -164,25 +169,25 @@ class Map {
             entity.update();
         }
 
-        let layer = this.layersWithToggle[Map.LAYER_SOLID];
-        layer.update(now);
-
-        layer = this.layersWithToggle[Map.LAYER_BLOCKERS];
-        layer.update(now);
+        for (let layerId in this.layers) {
+            if (this.layers.hasOwnProperty(layerId)) {
+                this.layers[layerId].update(now);
+            }
+        }
 
         this.entities = this.entities.filter(s => !s.dead);
     }
 
     _renderLayer(layerId) {
-        var layer = this.layersWithToggle[layerId];
+        var layer = this.layers[layerId];
         if (layer.isVisible()) {
             this._tileEngine.renderLayer(layerId);
         }
     }
 
     render(context) {
-        this._tileEngine.renderLayer(Map.LAYER_GROUND);
-        this._tileEngine.renderLayer(Map.LAYER_WALLS);
+        this._renderLayer(Map.LAYER_GROUND);
+        this._renderLayer(Map.LAYER_WALLS);
         this._renderLayer(Map.LAYER_SOLID);
         this._renderLayer(Map.LAYER_BLOCKERS);
 
