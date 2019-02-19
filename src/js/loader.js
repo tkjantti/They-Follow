@@ -33,6 +33,7 @@ const LOADER = {};
     const TILE_HEIGHT = 32;
 
     const TILE_GROUND = 1;
+    const TILE_SOLID = 2;
     const TILE_WALL = 3;
     const TILE_BLOCKER = 4;
 
@@ -45,9 +46,6 @@ const LOADER = {};
     }
 
     exports.loadMap = function (mapData, map, layers, createFunctions) {
-        const blockerData = mapToLayer(
-            mapData, tile => isOneOf(tile, layers.blocker) ? TILE_BLOCKER : 0);
-
         let tileEngine = kontra.tileEngine({
             tilewidth: TILE_WIDTH,
             tileheight: TILE_HEIGHT,
@@ -66,11 +64,11 @@ const LOADER = {};
                 name: Map.LAYER_WALLS,
                 data: mapToLayer(mapData, tile => isOneOf(tile, layers.wall) ? TILE_WALL : 0),
             }, {
-                name: Map.LAYER_FLASHING,
-                data: blockerData,
+                name: Map.LAYER_SOLID,
+                data: mapToLayer(mapData, tile => isOneOf(tile, layers.solid) ? TILE_SOLID : 0),
             }, {
                 name: Map.LAYER_BLOCKERS,
-                data: blockerData,
+                data: mapToLayer(mapData, tile => isOneOf(tile, layers.blocker) ? TILE_BLOCKER : 0),
             }],
         });
 

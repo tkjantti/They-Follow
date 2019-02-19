@@ -84,6 +84,16 @@
         });
     }
 
+    function createSwitch(map, position) {
+        return kontra.sprite({
+            type: 'switch',
+            width: 32,
+            height: 32,
+            position: position,
+            color: 'orange',
+        });
+    }
+
     function createMap(mapData) {
         numberOfArtifactsCollected = 0;
 
@@ -92,11 +102,13 @@
             'A': createArtifact,
             'a': createArtifact,
             'G': GHOST.create,
+            'o': createSwitch,
         };
         let layers = {
-            ground: [' ', 'G', '@', 'a'],
+            ground: [' ', 'G', '@', 'a', 'o'],
             wall: ['='],
             blocker: ['#', 'A'],
+            solid: ['O'],
         };
         LOADER.loadMap(mapData, map, layers, createFunctions);
     }
@@ -155,21 +167,25 @@
         for (let i = 0; i < map.entities.length; i++) {
             let sprite = map.entities[i];
 
-            if ((sprite.type === 'ghost') &&
-                (sprite.color !== 'yellow') &&
-                map.player.collidesWith(sprite) &&
-                !map.player.dead &&
-                !mapIsFinished()) {
-                map.player.dead = true;
-                MUSIC.playTune("end");
-                lives--;
-            }
+            if (map.player.collidesWith(sprite)) {
+                if ((sprite.type === 'ghost') &&
+                    (sprite.color !== 'yellow') &&
+                    !map.player.dead &&
+                    !mapIsFinished()) {
+                    map.player.dead = true;
+                    MUSIC.playTune("end");
+                    lives--;
+                }
 
-            if ((sprite.type === 'item') &&
-                map.player.collidesWith(sprite)) {
-                sprite.dead = true;
-                numberOfArtifactsCollected++;
-                MUSIC.playTune("eat");
+                if (sprite.type === 'switch') {
+                    map.toggleLayer(Map.LAYER_SOLID);
+                }
+
+                if (sprite.type === 'item') {
+                    sprite.dead = true;
+                    numberOfArtifactsCollected++;
+                    MUSIC.playTune("eat");
+                }
             }
         }
     }

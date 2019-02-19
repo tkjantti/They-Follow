@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Tero Jäntti, Sami Heikkinen
+ * Copyright 2018-2019 Tero Jäntti, Sami Heikkinen
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -22,9 +22,8 @@
  * SOFTWARE.
 */
 
+/* global StableLayer, ToggleLayer */
 /* exported Map */
-
-const ONLINE_TOGGLE_DELAY = 1200;
 
 class Map {
     get width() {
@@ -44,25 +43,21 @@ class Map {
     }
 
     reset(mapData = null, tileEngine = null) {
+        const now = performance.now();
+
+        let online = mapData ? mapData.online : null;
+        let offline = mapData ? mapData.offline : null;
         this._mapData = mapData;
         this._tileEngine = tileEngine;
+        this.layers = {
+            [Map.LAYER_GROUND]: new StableLayer(),
+            [Map.LAYER_WALLS]: new StableLayer(),
+            [Map.LAYER_SOLID]: new ToggleLayer(),
+            [Map.LAYER_BLOCKERS]: new ToggleLayer(online, offline),
+        };
         this.entities = [];
         this.player = null;
         this.artifactCount = 0;
-
-        this.online = true;
-
-        // When online mode was requested on/off (it takes a little time to toggle it).
-        this._onlineToggleSwitchTime = null;
-
-        const now = performance.now();
-
-        // Last time when online mode was toggled on/off.
-        this._onlineLatestToggleTime = now;
-
-        // How long to wait until next on/off toggle.
-        this._onlineToggleWaitTime = mapData ? mapData.online : null;
-
         this.startTime = now;
     }
 
@@ -76,22 +71,26 @@ class Map {
         }
     }
 
-    _collidesWithLayer(entity, layer) {
+    _collidesWithLayer(entity, layerId) {
         let cameraCoordinateBounds = {
             x: -this._tileEngine.sx + entity.x,
             y: -this._tileEngine.sy + entity.y,
             width: entity.width,
             height: entity.height
         };
-        return this._tileEngine.layerCollidesWith(layer, cameraCoordinateBounds);
+        var layer = this.layers[layerId];
+        return layer.online &&
+            this._tileEngine.layerCollidesWith(layerId, cameraCoordinateBounds);
     }
 
     collidesWithWalls(entity) {
-        return this._collidesWithLayer(entity, Map.LAYER_WALLS);
+        return this._collidesWithLayer(entity, Map.LAYER_WALLS) ||
+            this._collidesWithLayer(entity, Map.LAYER_SOLID);
     }
 
     collidesWithBlockers(entity) {
-        return this.online && this._collidesWithLayer(entity, Map.LAYER_BLOCKERS);
+        return this._collidesWithLayer(entity, Map.LAYER_BLOCKERS) ||
+            this._collidesWithLayer(entity, Map.LAYER_SOLID);
     }
 
     adjustCamera(position, speed) {
@@ -110,6 +109,13 @@ class Map {
         }
     }
 
+    toggleLayer(layerId) {
+        let layer = this.layers[layerId];
+        if (layer) {
+            layer.toggle();
+        }
+    }
+
     update() {
         let now = performance.now();
 
@@ -118,30 +124,27 @@ class Map {
             entity.update();
         }
 
-        if (this._onlineToggleWaitTime < (now - this._onlineLatestToggleTime)) {
-            this._onlineToggleSwitchTime = now;
-            this._onlineLatestToggleTime = now;
-            this._onlineToggleWaitTime = this.online ? this._mapData.offline : this._mapData.online;
-        }
-
-        if (this._onlineToggleSwitchTime &&
-            ONLINE_TOGGLE_DELAY < (now - this._onlineToggleSwitchTime)) {
-            this.online = !this.online;
-            this._onlineToggleSwitchTime = null;
+        for (let layerId in this.layers) {
+            if (this.layers.hasOwnProperty(layerId)) {
+                this.layers[layerId].update(now);
+            }
         }
 
         this.entities = this.entities.filter(s => !s.dead);
     }
 
+    _renderLayer(layerId) {
+        var layer = this.layers[layerId];
+        if (layer.isVisible()) {
+            this._tileEngine.renderLayer(layerId);
+        }
+    }
+
     render(context) {
-        this._tileEngine.renderLayer(Map.LAYER_GROUND);
-        this._tileEngine.renderLayer(Map.LAYER_WALLS);
-        if (this._onlineToggleSwitchTime && (Math.random() >= 0.5)) {
-            this._tileEngine.renderLayer(Map.LAYER_FLASHING);
-        }
-        if (this.online && !this._onlineToggleSwitchTime) {
-            this._tileEngine.renderLayer(Map.LAYER_BLOCKERS);
-        }
+        this._renderLayer(Map.LAYER_GROUND);
+        this._renderLayer(Map.LAYER_WALLS);
+        this._renderLayer(Map.LAYER_SOLID);
+        this._renderLayer(Map.LAYER_BLOCKERS);
 
         context.save();
         context.translate(-this._tileEngine.sx, -this._tileEngine.sy);
@@ -172,6 +175,6 @@ class Map {
 }
 
 Map.LAYER_GROUND = 'G';
-Map.LAYER_FLASHING = 'F';
 Map.LAYER_BLOCKERS = 'B';
+Map.LAYER_SOLID = 'S';
 Map.LAYER_WALLS = 'W';
