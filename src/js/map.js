@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Tero Jäntti, Sami Heikkinen
+ * Copyright 2018-2019 Tero Jäntti, Sami Heikkinen
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -22,53 +22,8 @@
  * SOFTWARE.
 */
 
+/* global StableLayer, ToggleLayer */
 /* exported Map */
-
-const ONLINE_TOGGLE_DELAY = 1200;
-
-class StableLayer {
-    toggle() {}
-    isVisible() { return true; }
-    update() {}
-}
-
-class ToggleLayer {
-    constructor(online = undefined, offline = undefined) {
-        this.online = true;
-        this.toggleRequestTime = null;
-        if (online && offline) {
-            this.onlineTime = online;
-            this.offlineTime = offline;
-            this.toggleWaitTime = online;
-            this.autoToggleTime = performance.now();
-        }
-    }
-
-    toggle() {
-        if (!this.toggleRequestTime) {
-            let now = performance.now();
-            this.toggleRequestTime = now;
-        }
-    }
-
-    isVisible() {
-        return this.toggleRequestTime ? (Math.random() >= 0.5) : this.online;
-    }
-
-    update(now) {
-        if (this.toggleWaitTime && this.toggleWaitTime < (now - this.autoToggleTime)) {
-            this.toggleRequestTime = now;
-            this.autoToggleTime = now;
-            this.toggleWaitTime = this.online ? this.offlineTime : this.onlineTime;
-        }
-
-        if (this.toggleRequestTime &&
-            ONLINE_TOGGLE_DELAY < (now - this.toggleRequestTime)) {
-            this.online = !this.online;
-            this.toggleRequestTime = null;
-        }
-    }
-}
 
 class Map {
     get width() {
